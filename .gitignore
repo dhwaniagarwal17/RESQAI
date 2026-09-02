@@ -1,0 +1,118 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+.installed.cfg
+lib/
+lib64/
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# =========================
+# Secrets & API Keys
+# =========================
+.env
+.env.*
+*.env
+secrets.py
+secrets.json
+api_keys.txt
+**/credentials*.json
+
+# =========================
+# Jupyter Notebooks
+# =========================
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+profile_default/
+ipython_config.py
+
+# =========================
+# ML Model Checkpoints & Weights
+# =========================
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.onnx
+*.pb
+*.h5
+*.hdf5
+checkpoints/
+saved_models/
+runs/
+
+# =========================
+# Datasets & Large Data Files
+# =========================
+data/
+datasets/
+*.csv
+*.tsv
+*.parquet
+*.jsonl
+*.arrow
+*.feather
+*.pkl
+*.pickle
+*.db
+*.sqlite
+
+# =========================
+# Hugging Face & Transformers Cache
+# =========================
+.cache/
+cache/
+~/.cache/huggingface/
+hub/
+transformers_cache/
+
+# =========================
+# Logs & Outputs
+# =========================
+*.log
+logs/
+output/
+outputs/
+results/
+wandb/
+mlruns/
+lightning_logs/
+
+# =========================
+# OS & Editor
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
