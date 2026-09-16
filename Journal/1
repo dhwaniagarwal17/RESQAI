@@ -1,0 +1,467 @@
+# RESQAI
+
+## AI-Assisted Humanitarian Disaster Message Classification
+
+### Project Development Journal
+
+**Team APEX**
+
+* Dhwani Agarwal – 1024031024
+* Sanchita Jain – 1024031020
+* Yuvakshi Sood – 1024031025
+
+**Department:** Computer Science
+**Institute:** Thapar Institute of Engineering and Technology
+
+---
+
+## 1. Project Idea and Problem Identification
+
+The project started with the observation that during disasters, social-media platforms generate a large amount of information in a very short period of time. These messages can include requests for rescue, medical help, food and water, reports of injuries, infrastructure damage, missing people, evacuation information, and rescue efforts.
+
+The major problem identified was that useful humanitarian information is mixed with irrelevant posts, opinions, emotional reactions, news, and other content. Manually filtering these messages is difficult during an emergency.
+
+Based on this problem, we decided to develop **RESQAI**, an AI-assisted system that could automatically classify disaster-related social-media messages and extract additional contextual information. The original project objective was therefore not simply to train a classifier, but to create a practical information-processing pipeline.
+
+---
+
+## 2. Initial Planning
+
+In the initial planning stage, we divided the project into several components:
+
+1. Dataset collection and understanding
+2. Data preprocessing
+3. Baseline machine-learning models
+4. Transformer-based models
+5. Model evaluation
+6. Selection of the final classifier
+7. Confidence-based decision mechanism
+8. Gemini integration
+9. Structured output
+10. User-facing application
+
+The planned architecture was a hybrid system in which **BERTweet** would perform the primary classification, while **Gemini** would provide additional contextual analysis for uncertain cases.
+
+The final workflow was planned as:
+
+**Message → Tokenization → BERTweet → Prediction + Confidence → Direct Result / Gemini → Structured Output**
+
+The project proposal specifies ten humanitarian categories, including requests or urgent needs, injured or dead people, infrastructure damage, missing or found people, evacuations, rescue/volunteering efforts, caution and advice, sympathy and support, other relevant information, and not humanitarian.
+
+---
+
+## 3. Dataset Selection
+
+We selected the **HumAID humanitarian information dataset** because it is specifically related to disaster and humanitarian information.
+
+The dataset contained:
+
+* **53,531 training messages**
+* **7,793 validation messages**
+* **15,160 test messages**
+* **76,484 messages in total**
+* **10 classification categories**
+
+The dataset was therefore large enough to support both traditional machine-learning experiments and transformer fine-tuning.
+
+---
+
+## 4. First Major Problem – Dataset Loading Error
+
+One of the first problems occurred while loading the HumAID dataset directly using the Hugging Face dataset loader.
+
+The initial approach was:
+
+`load_dataset("QCRI/HumAID-all")`
+
+However, the notebook generated:
+
+**ExpectedMoreSplitsError: {'dev'}**
+
+The problem occurred because the dataset configuration expected a `dev` split that was not available in the downloaded/recorded split structure.
+
+### Solution
+
+Instead of relying on the dataset configuration, we explicitly supplied the parquet files for:
+
+* train
+* validation
+* test
+
+This allowed the dataset to be loaded using the actual available files.
+
+### Learning
+
+This taught us that datasets available through an online repository may not always load correctly through a high-level loader. It is important to inspect the available splits and file structure instead of assuming that the dataset configuration will always match the expected format.
+
+---
+
+## 5. Dataset Analysis and Preprocessing
+
+After successfully loading the dataset, we examined the message lengths before deciding the maximum sequence length.
+
+The analysis showed that the average message length was approximately **35 tokens**, while only a very small percentage of messages reached 128 tokens.
+
+Based on this observation, we selected:
+
+**Maximum sequence length = 128**
+
+We then converted the class labels into numerical IDs and prepared the dataset for Hugging Face Transformers.
+
+The BERTweet tokenizer was used with:
+
+* truncation enabled
+* maximum length = 128
+* padding to maximum length
+
+The tokenization process was successfully completed for all three splits, producing `input_ids` and `attention_mask`.
+
+---
+
+## 6. Baseline Model Experiments
+
+Before using BERTweet, we did not immediately assume that a transformer would be the best solution.
+
+Several approaches were investigated:
+
+* TF-IDF + Naive Bayes
+* TF-IDF + Logistic Regression
+* Class-weighted Logistic Regression
+* Linear SVM
+* Random Forest
+* DistilBERT
+* Class-weighted DistilBERT
+* BERTweet
+
+This experimentation was important because it allowed us to compare traditional NLP approaches with transformer-based approaches rather than selecting BERTweet without evidence.
+
+For example, one class-weighted Logistic Regression experiment achieved approximately **72.76% validation accuracy** and **73.07% weighted F1**.
+
+### Learning
+
+The baseline experiments showed us that traditional TF-IDF-based approaches could provide a useful reference point, but disaster messages contain contextual information that simple word-frequency representations may not fully capture.
+
+---
+
+## 7. DistilBERT Experiment
+
+We next experimented with DistilBERT as a lighter transformer-based alternative.
+
+During model loading, the notebook displayed several `MISSING` and `UNEXPECTED` parameter warnings. These warnings occurred because the pretrained language model was being adapted to a new sequence-classification task, meaning the classification head needed to be initialized for our ten classes.
+
+The experiment helped us understand an important difference between:
+
+* pretrained language-model parameters
+* task-specific classification parameters
+
+### Learning
+
+We initially interpreted model-loading warnings as potential errors, but investigation showed that such warnings can occur when adapting a pretrained model to a downstream classification task.
+
+---
+
+## 8. Moving to BERTweet
+
+We then focused on BERTweet.
+
+BERTweet was selected because it was pretrained specifically on Twitter-style language, making it suitable for our social-media disaster-message classification problem.
+
+The model was configured for ten-class classification. The classification head was newly initialized for our specific categories, while the pretrained BERTweet representation was used as the starting point.
+
+The project files show the BERTweet model being loaded using `AutoModelForSequenceClassification` with the ten project labels.
+
+---
+
+## 9. BERTweet Training Experiments
+
+The first BERTweet training experiments were not treated as the final configuration. We experimented with different training settings.
+
+Different versions of the BERTweet experiment were created, including V2 and V4. The training configurations involved changes to:
+
+* learning rate
+* number of epochs
+* label smoothing
+* weight decay
+* warm-up steps
+* batch size
+* checkpoint selection
+
+For the final configuration, the important settings included:
+
+* Learning rate: **1 × 10⁻⁵**
+* Batch size: **8**
+* Maximum epochs: **3**
+* Weight decay: **0.01**
+* Warm-up steps: **500**
+* Linear learning-rate scheduler
+* FP16 mixed precision
+* Early stopping
+* Best validation weighted-F1 checkpoint selection
+
+These settings are documented in the project proposal.
+
+---
+
+## 10. Problem of Overfitting
+
+During training, we observed that validation performance improved and then began to decrease slightly in later training.
+
+The experiments showed that validation performance peaked around the **second epoch** and decreased slightly during the third epoch.
+
+This indicated that simply training for more epochs was not necessarily beneficial.
+
+### Solution
+
+We introduced:
+
+* validation after each epoch
+* early stopping
+* saving checkpoints
+* selecting the best checkpoint according to weighted F1
+
+This prevented the final model from automatically being the model from the last epoch.
+
+### Learning
+
+A higher number of epochs does not automatically mean a better model. Validation performance must be monitored to determine whether the model is actually generalizing.
+
+---
+
+## 11. Final BERTweet Results
+
+The final BERTweet model produced:
+
+| Metric                 |     Result |
+| ---------------------- | ---------: |
+| Validation Accuracy    | **78.40%** |
+| Validation Weighted F1 | **78.05%** |
+| Test Accuracy          | **78.67%** |
+| Test Weighted F1       | **78.27%** |
+
+The final test evaluation was performed on the unseen test set containing 15,160 messages.
+
+The validation notebook also recorded:
+
+**Accuracy = 0.7840369562**
+
+**Weighted F1 = 0.7805141229**
+
+---
+
+## 12. Understanding Classification Errors
+
+One of the important shortcomings of the project is that not every disaster message can be cleanly separated into one category.
+
+For example, a single message can contain information about:
+
+* an injured person
+* a request for medical help
+* a damaged building
+* an evacuation
+* a location
+
+This creates semantic overlap between classes.
+
+The project therefore recognizes that classification errors can occur particularly for ambiguous messages. Confusion analysis and per-class precision/recall were identified as important areas for further analysis.
+
+### Learning
+
+Accuracy alone does not tell the complete story. Looking at individual classes and confusion patterns is necessary to understand where the model makes mistakes.
+
+---
+
+## 13. Why Gemini Was Added
+
+After developing the primary classifier, we identified a limitation: BERTweet provides a category and confidence score, but some messages require deeper contextual interpretation.
+
+We therefore designed Gemini as a **secondary analysis layer**, rather than replacing BERTweet.
+
+The planned logic was:
+
+* High-confidence BERTweet prediction → return the classification
+* Low-confidence prediction → send the message to Gemini
+* `not_humanitarian` predictions can also receive additional contextual verification
+
+Gemini can then extract information such as:
+
+* humanitarian category
+* urgency
+* location
+* number of affected people
+* requested assistance
+* recommended action
+
+This makes the system more than a simple classification model.
+
+---
+
+## 14. Important Shortcoming – Dependence on Gemini
+
+Although Gemini improves the contextual-analysis capability, it also introduces an external dependency.
+
+The Gemini layer requires API access, which means that the system can be affected by:
+
+* API availability
+* network connectivity
+* API usage limits
+* latency
+* potential API costs
+
+Therefore, BERTweet remains the primary classifier and Gemini is intended to be used selectively.
+
+---
+
+## 15. Confidence-Based Architecture
+
+The final architecture became a hybrid pipeline:
+
+```text
+                 Disaster Message
+                        |
+                        ↓
+                  BERTweet
+                        |
+                Prediction + Confidence
+                        |
+              ┌─────────┴─────────┐
+              ↓                   ↓
+       High Confidence       Low Confidence
+              ↓                   ↓
+       Direct Result           Gemini
+                                  ↓
+                       Contextual Analysis
+                                  ↓
+                         Structured Output
+```
+
+The purpose of this design was to avoid sending every message to the external LLM.
+
+This can reduce unnecessary API usage while keeping the transformer as the main classification engine.
+
+---
+
+## 16. System-Level Shortcomings
+
+During the project, we identified several limitations.
+
+### 16.1 Classification errors
+
+BERTweet can incorrectly classify ambiguous messages.
+
+**Possible improvement:** confidence thresholds, confusion analysis, better training data, and secondary analysis.
+
+### 16.2 Semantic overlap
+
+Some categories naturally overlap.
+
+**Possible improvement:** hierarchical classification or multilabel classification.
+
+### 16.3 LLM dependency
+
+Gemini requires external API access.
+
+**Possible improvement:** use Gemini only when necessary and keep BERTweet as the primary system.
+
+### 16.4 Emergency interpretation
+
+The system should not automatically trigger critical emergency actions based solely on an AI prediction.
+
+**Possible improvement:** maintain human verification for high-impact decisions.
+
+### 16.5 Privacy
+
+Social-media messages can contain sensitive information.
+
+**Possible improvement:** minimize stored information and avoid unnecessary personally identifiable information.
+
+### 16.6 Computational requirements
+
+Transformer models require more computational resources than simpler TF-IDF-based approaches.
+
+**Possible improvement:** batching, optimization, and appropriate deployment infrastructure.
+
+---
+
+## 17. What Did Not Work as Expected
+
+The development process was iterative rather than linear.
+
+The major unsuccessful or imperfect stages included:
+
+1. **Direct HumAID loading failed** because of the unexpected `dev` split requirement.
+2. **Several traditional models were explored but did not provide the same contextual capability as the transformer approach.**
+3. **DistilBERT required understanding of pretrained-model loading warnings and task-specific classification heads.**
+4. **Initial BERTweet configurations were modified rather than used directly as the final model.**
+5. **Training for additional epochs did not continuously improve validation performance.**
+6. **A single classification output was not sufficient for ambiguous disaster messages**, motivating the Gemini fallback.
+7. **The final system still has classification limitations**, particularly where humanitarian categories overlap.
+
+These failures were useful because each one resulted in a change to the design or methodology.
+
+---
+
+## 18. Final System
+
+The completed design combines:
+
+**Python + Hugging Face Transformers + PyTorch + BERTweet + Gemini API**
+
+The main pipeline is:
+
+1. User enters a disaster-related message.
+2. Message is tokenized using the BERTweet tokenizer.
+3. BERTweet predicts one of ten humanitarian categories.
+4. Prediction confidence is calculated.
+5. High-confidence results can be returned directly.
+6. Ambiguous results can be sent to Gemini.
+7. Gemini provides additional contextual information.
+8. The system displays structured information to the user.
+
+The proposed system therefore combines NLP, machine learning, transformer fine-tuning, confidence-based decision logic, and LLM integration.
+
+---
+
+## 19. Final Reflection
+
+The development of RESQAI showed us that building an AI system is not limited to selecting a model and training it.
+
+The project involved several iterations of:
+
+**Problem identification → Dataset preparation → Baseline models → Transformer experiments → Error analysis → Hyperparameter changes → Validation → Final model → System integration**
+
+The most important learning from the project was the importance of experimentation. The final BERTweet model was the result of comparing several approaches and modifying the training strategy rather than relying on the first implementation.
+
+The project also showed the limitations of AI in disaster-response scenarios. A model with approximately 78.67% test accuracy can still make mistakes, particularly when messages are ambiguous or contain multiple types of humanitarian information. Therefore, RESQAI is designed as an **AI-assisted decision-support system rather than a replacement for human emergency responders**.
+
+---
+
+## 20. Future Improvements
+
+Future versions of RESQAI can focus on:
+
+* improving per-class performance
+* detailed confusion-matrix analysis
+* better confidence calibration
+* hierarchical or multilabel classification
+* improved location extraction
+* better urgency detection
+* real-time social-media integration
+* a complete web interface
+* API deployment
+* optimized inference
+* controlled storage of analyzed messages
+* human-in-the-loop verification
+
+The project proposal also identifies visualization, structured output, urgency identification, location extraction, and recommended-action generation as subsequent development areas.
+
+---
+
+## Conclusion
+
+RESQAI evolved from a simple idea of classifying disaster tweets into a hybrid AI-assisted humanitarian information-processing system.
+
+The project began with understanding the disaster-information problem, moved through dataset preparation and traditional machine-learning baselines, and then progressed to transformer-based experimentation with DistilBERT and BERTweet. After multiple iterations and training adjustments, BERTweet achieved **78.67% test accuracy and 78.27% weighted F1**.
+
+The remaining limitations motivated the addition of a confidence-based Gemini layer for contextual analysis. The final architecture therefore combines the speed and domain-specific classification of BERTweet with the contextual capabilities of an LLM.
+
+The project demonstrated that errors and failed experiments are not separate from the development process; they are an important part of reaching the final system.
