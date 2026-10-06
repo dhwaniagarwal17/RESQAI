@@ -1,0 +1,737 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{titling}
+
+% -----------------------------------------------------
+% ResQAI Project Proposal
+% -----------------------------------------------------
+
+\title{ResQAI: AI-Assisted Humanitarian Disaster Message Classification}
+
+% Add subtitle
+\pretitle{\begin{center}\bfseries\fontsize{18bp}{18bp}\selectfont}
+
+\newcommand{\BvrSubtitle}[1]{%
+  \posttitle{%
+    \par\end{center}
+    \begin{center}\large#1\end{center}
+    \vskip 0.5em}%
+}
+
+% Hints in section titles
+\newcommand{\BvrHint}[1]{%
+  {\normalfont\normalsize\itshape\hfill #1}}
+
+\BvrSubtitle{%
+  Project Proposal \\
+  Submitted to: \\[0.3cm]
+  \bfseries Thapar Institute of Engineering and Technology
+}
+
+\author{
+  Dhwani Agarwal%
+  \thanks{Roll No: \texttt{1024031024}}
+  \and
+  Sanchita Jain%
+  \thanks{Roll No: \texttt{1024031020}}
+  \and
+  Yuvakshi Sood%
+  \thanks{Roll No: \texttt{1024031025}}
+}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+% =====================================================
+% 1. HIGHER-ORDER GOAL
+% =====================================================
+
+\section{Higher-order goal%
+  \BvrHint{\ldots secondary framing}}
+
+This project aims to improve the efficiency of disaster information
+processing by automatically identifying and organizing humanitarian
+information from large volumes of social-media messages.
+
+During natural disasters and humanitarian emergencies, affected individuals
+often use social media to report injuries, request assistance, share
+information about damaged infrastructure, communicate evacuation
+requirements, report missing people, or offer rescue and volunteering
+support.
+
+The higher-order goal of ResQAI is to transform this unstructured and
+high-volume information into structured, actionable categories that can
+support emergency-response personnel and other decision makers.
+
+The immediate engineering objective is to develop a deployable software
+pipeline that can classify disaster-related messages rapidly and provide
+additional contextual analysis for ambiguous messages.
+
+% =====================================================
+% 2. TIME-TO-VALUE
+% =====================================================
+
+\section{Time-to-value %
+  \BvrHint{\ldots primary heuristic}}
+
+\begin{itemize}[leftmargin=0.7cm]
+
+    \item We will deliver meaningful increments quickly by first implementing
+    the core user workflow and validating the classification component.
+
+    \item We will prioritize a working end-to-end prototype over unnecessary
+    infrastructure, allowing the core classification workflow to be
+    demonstrated early.
+
+    \item The first iteration will focus on message input, humanitarian
+    classification, confidence estimation, and result presentation.
+
+    \item Subsequent iterations will add contextual analysis, structured
+    information extraction, and improved decision-support functionality.
+
+    \item Success will be measured using classification accuracy, weighted
+    F1 score, inference behavior, and the usefulness of the resulting
+    structured information.
+
+\end{itemize}
+
+% =====================================================
+% 3. PROBLEM STATEMENT
+% =====================================================
+
+\section{Problem Statement}
+
+Natural disasters generate large amounts of social-media communication in a
+short period of time. These messages may contain valuable information about
+people, infrastructure, emergency needs, evacuation, rescue activities, and
+safety conditions.
+
+However, several challenges make it difficult to use this information
+effectively:
+
+\begin{itemize}[leftmargin=0.7cm]
+
+    \item \textbf{Information overload:} A large number of messages may be
+    generated during a disaster, making manual inspection difficult.
+
+    \item \textbf{Unstructured information:} Messages are generally short,
+    informal, and lack a standardized structure.
+
+    \item \textbf{Mixed relevance:} Useful humanitarian information is mixed
+    with political discussions, opinions, emotional reactions, news, and
+    unrelated content.
+
+    \item \textbf{Semantic ambiguity:} Several humanitarian categories can
+    have overlapping meanings, making classification difficult.
+
+    \item \textbf{Limited response time:} Emergency information may become
+    less useful if it cannot be identified quickly.
+
+\end{itemize}
+
+\textbf{Why this matters now (contextual relevance):}
+Social-media platforms can provide near-real-time information during
+disasters, but the usefulness of this information depends on the ability to
+filter, organize, and interpret it efficiently.
+
+% =====================================================
+% 4. PROPOSED SOLUTION
+% =====================================================
+
+\section{Proposed Solution %
+\BvrHint{\ldots Software Proposition}}
+
+\subsection{Overview}
+
+ResQAI is proposed as an AI-assisted disaster information processing system
+that automatically classifies incoming crisis-related messages into
+humanitarian categories.
+
+The system consists of the following major components:
+
+\begin{itemize}[leftmargin=0.7cm]
+
+    \item \textbf{Message input:} Accept a disaster-related social-media
+    message.
+
+    \item \textbf{BERTweet classifier:} Use a transformer model pretrained
+    specifically for Twitter-style text and fine-tuned on humanitarian
+    disaster messages.
+
+    \item \textbf{Confidence estimation:} Produce the predicted category
+    together with a confidence score.
+
+    \item \textbf{LLM fallback:} Route ambiguous or low-confidence messages
+    to a large language model such as Gemini for additional contextual
+    analysis.
+
+    \item \textbf{Structured output:} Present the resulting category and,
+    where applicable, additional information such as urgency, location,
+    affected people, and recommended action.
+
+\end{itemize}
+
+\subsection{Core workflow}
+
+\begin{enumerate}[leftmargin=0.7cm]
+
+    \item A disaster-related message is submitted to ResQAI.
+
+    \item The message is tokenized using the BERTweet tokenizer.
+
+    \item The fine-tuned BERTweet classifier predicts one of the ten
+    humanitarian categories.
+
+    \item The system obtains the prediction confidence.
+
+    \item High-confidence predictions are accepted directly.
+
+    \item Low-confidence predictions can be passed to the secondary Gemini
+    analysis layer.
+
+    \item The system presents the classification and relevant structured
+    information to the user.
+
+\end{enumerate}
+
+\subsection{Humanitarian classification categories}
+
+The implemented classifier uses ten categories:
+
+\begin{itemize}[leftmargin=0.7cm]
+
+    \item \texttt{caution\_and\_advice}
+
+    \item \texttt{displaced\_people\_and\_evacuations}
+
+    \item \texttt{infrastructure\_and\_utility\_damage}
+
+    \item \texttt{injured\_or\_dead\_people}
+
+    \item \texttt{missing\_or\_found\_people}
+
+    \item \texttt{not\_humanitarian}
+
+    \item \texttt{other\_relevant\_information}
+
+    \item \texttt{requests\_or\_urgent\_needs}
+
+    \item \texttt{rescue\_volunteering\_or\_donation\_effort}
+
+    \item \texttt{sympathy\_and\_support}
+
+\end{itemize}
+
+% =====================================================
+% 5. SOLUTION APPROACH
+% =====================================================
+
+\section{Solution Approach %
+\BvrHint{\ldots Engineering focus}}
+
+This is an engineering-oriented machine learning project focused on
+developing a practical system for disaster information classification.
+
+The project uses established machine learning and natural language processing
+techniques rather than proposing a new transformer architecture.
+
+\subsection{Dataset and preprocessing %
+\BvrHint{\ldots data preparation}}
+
+The project uses the HumAID humanitarian information dataset.
+
+The dataset contains:
+
+\begin{itemize}[leftmargin=0.7cm]
+
+    \item 53,531 training messages,
+    \item 7,793 validation messages,
+    \item 15,160 test messages,
+    \item 76,484 messages in total,
+    \item 10 humanitarian classification categories.
+
+\end{itemize}
+
+Messages are tokenized using the BERTweet tokenizer.
+
+The maximum sequence length is set to 128 tokens. Dataset analysis showed that
+the average message length is approximately 35 tokens, while only a very
+small proportion of messages reaches the 128-token limit.
+
+\subsection{Model development %
+\BvrHint{\ldots experimental engineering}}
+
+Multiple approaches were evaluated before selecting the final model.
+
+The investigated approaches included:
+
+\begin{itemize}[leftmargin=0.7cm]
+
+    \item TF-IDF with Naive Bayes,
+    \item TF-IDF with Logistic Regression,
+    \item class-weighted Logistic Regression,
+    \item Linear SVM,
+    \item Random Forest,
+    \item DistilBERT,
+    \item class-weighted DistilBERT,
+    \item BERTweet.
+
+\end{itemize}
+
+BERTweet produced the strongest overall performance and was therefore selected
+as the primary classifier.
+
+\subsection{BERTweet fine-tuning %
+\BvrHint{\ldots primary ML component}}
+
+The final BERTweet configuration uses:
+
+\begin{itemize}[leftmargin=0.7cm]
+
+    \item Learning rate: $1\times10^{-5}$
+    \item Maximum sequence length: 128
+    \item Training batch size: 8
+    \item Evaluation batch size: 8
+    \item Maximum epochs: 3
+    \item Weight decay: 0.01
+    \item Warm-up steps: 500
+    \item Linear learning-rate scheduler
+    \item FP16 mixed precision during training
+    \item Early stopping
+    \item Best validation weighted F1 checkpoint selection
+
+\end{itemize}
+
+\subsection{Overfitting control %
+\BvrHint{\ldots generalization}}
+
+The model is evaluated after each epoch using validation data.
+
+The best-performing checkpoint is selected using weighted F1 rather than
+automatically using the final training epoch.
+
+The experiments showed that validation performance peaked around the second
+epoch and decreased slightly during the third epoch. The use of early
+stopping and best-checkpoint selection therefore helps prevent unnecessary
+additional training from reducing generalization.
+
+\subsection{Confidence-based secondary analysis}
+
+BERTweet is used as the primary classifier.
+
+For messages where the model is sufficiently confident, the classification
+result can be returned directly.
+
+For ambiguous messages, a secondary LLM layer using Gemini is proposed.
+
+The secondary layer can analyze:
+
+\begin{itemize}[leftmargin=0.7cm]
+
+    \item humanitarian category,
+    \item urgency,
+    \item location,
+    \item number of people affected,
+    \item requested assistance,
+    \item recommended action.
+
+\end{itemize}
+
+The LLM therefore complements rather than replaces the trained
+domain-specific classifier.
+
+% =====================================================
+% 6. SYSTEM ARCHITECTURE
+% =====================================================
+
+\section{System Architecture %
+\BvrHint{\ldots software-based solution}}
+
+The proposed ResQAI architecture consists of several logical components.
+
+\begin{itemize}[leftmargin=0.7cm]
+
+    \item \textbf{Input layer:} Receives a social-media or crisis message.
+
+    \item \textbf{NLP layer:} Tokenizes and preprocesses the incoming
+    message.
+
+    \item \textbf{BERTweet layer:} Performs humanitarian classification.
+
+    \item \textbf{Confidence layer:} Determines whether the classifier is
+    sufficiently confident in its prediction.
+
+    \item \textbf{LLM layer:} Provides additional analysis for ambiguous
+    messages.
+
+    \item \textbf{Output layer:} Displays classification, confidence, and
+    additional structured information.
+
+\end{itemize}
+
+The conceptual architecture is:
+
+\begin{verbatim}
+                    Crisis Message
+                          |
+                          v
+                 +----------------+
+                 | Preprocessing  |
+                 |  + Tokenizer   |
+                 +-------+--------+
+                         |
+                         v
+                 +----------------+
+                 |    BERTweet    |
+                 |   Classifier   |
+                 +-------+--------+
+                         |
+                  Category +
+                  Confidence
+                         |
+              +----------+----------+
+              |                     |
+       High Confidence        Low Confidence
+              |                     |
+              v                     v
+       Direct Result          Gemini API
+                                    |
+                                    v
+                            Contextual Analysis
+                                    |
+                                    v
+                           Structured Output
+\end{verbatim}
+
+% =====================================================
+% 7. EVALUATION CRITERION
+% =====================================================
+
+\section{Evaluation Criterion %
+\BvrHint{\ldots measurable and attributable}}
+
+The success of the project will be evaluated using measurable machine
+learning and system-level metrics.
+
+\subsection{Primary evaluation metrics}
+
+\textbf{Classification Accuracy:}
+
+\begin{equation}
+Accuracy =
+\frac{\text{Correct Predictions}}
+{\text{Total Predictions}}
+\end{equation}
+
+Accuracy measures the overall proportion of correctly classified messages.
+
+\textbf{Weighted F1 Score:}
+
+The F1 score combines precision and recall.
+
+\begin{equation}
+F1 = 2 \times
+\frac{Precision \times Recall}
+{Precision + Recall}
+\end{equation}
+
+The weighted average accounts for the different support of individual
+classes.
+
+\subsection{Current achieved performance}
+
+The final BERTweet model achieved:
+
+\begin{itemize}[leftmargin=0.7cm]
+
+    \item \textbf{Best Validation Accuracy: 78.40\%}
+    \item \textbf{Best Validation Weighted F1: approximately 78.05\%}
+    \item \textbf{Test Accuracy: 78.67\%}
+    \item \textbf{Test Weighted F1: 78.27\%}
+
+\end{itemize}
+
+The test results were obtained from the unseen test set containing 15,160
+messages.
+
+\subsection{Secondary evaluation metrics}
+
+The following metrics can be considered during further system development:
+
+\begin{itemize}[leftmargin=0.7cm]
+
+    \item \textbf{Per-class precision and recall:} To identify categories
+    that require improvement.
+
+    \item \textbf{Confusion analysis:} To identify commonly confused
+    categories.
+
+    \item \textbf{Inference time:} Time required to classify a single
+    message.
+
+    \item \textbf{LLM fallback rate:} Percentage of messages requiring
+    secondary analysis.
+
+    \item \textbf{Confidence calibration:} Relationship between model
+    confidence and actual prediction correctness.
+
+\end{itemize}
+
+\subsection{Validation plan %
+\BvrHint{\ldots high-level}}
+
+The model will be evaluated using the predefined training, validation, and
+test splits.
+
+The validation set is used for model selection and hyperparameter decisions,
+while the test set is reserved for final performance evaluation.
+
+This separation prevents the test set from influencing model selection.
+
+% =====================================================
+% 8. SCALABILITY
+% =====================================================
+
+\section{Scalability %
+\BvrHint{\ldots with foresight}}
+
+The proposition should scale in both theoretical and practical senses.
+
+\begin{enumerate}[leftmargin=0.7cm]
+
+    \item \textbf{Scalable classification:}
+
+    The trained classifier can process incoming messages independently,
+    allowing multiple inference requests to be handled without retraining the
+    model.
+
+    \item \textbf{Batch processing:}
+
+    Messages can be grouped into batches for more efficient processing when
+    large volumes of information are available.
+
+    \item \textbf{Separation of components:}
+
+    The classifier, LLM analysis layer, and user interface can be separated
+    into independent components.
+
+    \item \textbf{API-based architecture:}
+
+    The classification model can be exposed through an API so that different
+    interfaces or applications can use the same inference service.
+
+    \item \textbf{LLM cost control:}
+
+    A confidence-based fallback mechanism avoids sending every message to an
+    external LLM, which can reduce unnecessary API usage.
+
+\end{enumerate}
+
+% =====================================================
+% 9. ENGINE AVAILABILITY
+% =====================================================
+
+\section{Engine availability heuristic}
+
+A mature set of machine learning and software components is available to
+implement the proposed system:
+
+\begin{itemize}[leftmargin=0.7cm]
+
+    \item \textbf{Hugging Face Transformers:} Model loading, tokenization,
+    and transformer inference.
+
+    \item \textbf{PyTorch:} Model execution and machine learning operations.
+
+    \item \textbf{BERTweet:} Primary humanitarian text-classification model.
+
+    \item \textbf{Gemini API:} Proposed secondary contextual reasoning layer.
+
+    \item \textbf{Python:} Core implementation and integration language.
+
+    \item \textbf{Web/API framework:} Can be used to expose the model as an
+    application service.
+
+    \item \textbf{Cloud or local deployment:} The inference component can be
+    deployed on suitable compute infrastructure depending on the required
+    scale.
+
+\end{itemize}
+
+The project uses established tools and models so that the engineering effort
+can focus on system integration, model evaluation, and practical usability.
+
+% =====================================================
+% 10. PROJECT SCOPE AND DELIVERABLES
+% =====================================================
+
+\section{Project scope and deliverables %
+\BvrHint{\ldots iteration-friendly}}
+
+\subsection{Initial deliverable %
+\BvrHint{\ldots first iteration}}
+
+The initial implementation includes:
+
+\begin{itemize}[leftmargin=0.7cm]
+
+    \item HumAID dataset preparation.
+
+    \item Training and evaluation of multiple baseline classifiers.
+
+    \item Fine-tuning of BERTweet for ten-class humanitarian classification.
+
+    \item Validation and test evaluation.
+
+    \item Prediction of humanitarian category for a new message.
+
+    \item Confidence score generation.
+
+    \item Model checkpoint preservation for inference.
+
+\end{itemize}
+
+\subsection{Subsequent deliverables}
+
+Further iterations will include:
+
+\begin{itemize}[leftmargin=0.7cm]
+
+    \item User-facing message input interface.
+
+    \item Confidence-based Gemini fallback.
+
+    \item Structured output generation.
+
+    \item Urgency and priority identification.
+
+    \item Location extraction.
+
+    \item Recommended-action generation.
+
+    \item Visualization of classification results.
+
+    \item Optional storage of analyzed messages and results.
+
+\end{itemize}
+
+% =====================================================
+% 11. RISKS AND MITIGATIONS
+% =====================================================
+
+\section{Risks and mitigations}
+
+\begin{itemize}[leftmargin=0.7cm]
+
+    \item \textbf{Classification errors:}
+
+    The classifier may incorrectly categorize ambiguous messages.
+
+    \textbf{Mitigation:} Use confidence scores, detailed validation, confusion
+    analysis, and secondary LLM analysis for low-confidence cases.
+
+    \item \textbf{Semantic overlap between classes:}
+
+    Some humanitarian categories have inherently similar meanings.
+
+    \textbf{Mitigation:} Analyze confusion patterns and consider hierarchical
+    or multilabel classification in future versions.
+
+    \item \textbf{LLM dependency:}
+
+    The Gemini fallback requires external API access.
+
+    \textbf{Mitigation:} Keep BERTweet as the primary classifier and use the
+    LLM only when required.
+
+    \item \textbf{Incorrect emergency interpretation:}
+
+    Automated predictions should not directly trigger critical emergency
+    actions without verification.
+
+    \textbf{Mitigation:} Treat the system as decision support and maintain
+    human oversight for high-impact decisions.
+
+    \item \textbf{Data privacy:}
+
+    Social-media messages may contain sensitive information.
+
+    \textbf{Mitigation:} Minimize stored information, avoid unnecessary
+    personally identifiable information, and apply appropriate access
+    controls.
+
+    \item \textbf{Computational requirements:}
+
+    Transformer inference requires more resources than simple TF-IDF
+    classifiers.
+
+    \textbf{Mitigation:} Use batching, model optimization, and appropriate
+    deployment infrastructure when scaling.
+
+\end{itemize}
+
+% =====================================================
+% 12. EXPECTED OUTCOME
+% =====================================================
+
+\section{Expected outcome}
+
+The expected outcome of the project is a working AI-assisted prototype that
+can accept a disaster-related message and automatically determine its most
+likely humanitarian category.
+
+The primary machine learning component has already demonstrated a test
+accuracy of approximately 78.67\% and a weighted F1 score of approximately
+78.27\%.
+
+The completed system is expected to provide:
+
+\begin{itemize}[leftmargin=0.7cm]
+
+    \item automated humanitarian classification,
+    \item confidence-based prediction,
+    \item identification of ambiguous messages,
+    \item optional LLM-based contextual analysis,
+    \item structured disaster information,
+    \item and a foundation for future real-time disaster information
+    processing.
+
+\end{itemize}
+
+% =====================================================
+% 13. SUMMARY
+% =====================================================
+
+\section{Summary}
+
+ResQAI proposes an AI-assisted approach for organizing and interpreting
+large volumes of disaster-related social-media messages.
+
+The project focuses on time-to-value by first developing and validating the
+core classification model before adding more advanced system components.
+
+The primary model, BERTweet, was fine-tuned using the HumAID dataset and
+achieved 78.67\% accuracy and 78.27\% weighted F1 on the unseen test set.
+
+The system is designed around a practical hybrid architecture: BERTweet
+provides fast domain-specific classification, while a large language model
+such as Gemini can be used for additional contextual reasoning when the
+classifier is uncertain.
+
+The project therefore combines machine learning, natural language processing,
+and software-system integration to create a practical information-processing
+tool for disaster-response scenarios.
+
+The final objective is not to replace emergency responders but to reduce the
+amount of unstructured information they need to manually process and help
+surface potentially relevant humanitarian information more efficiently.
+
+\end{document}
