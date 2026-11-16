@@ -116,3 +116,13 @@ desktop.ini
 *.swp
 *.swo
 *~
+
+# Frontend dependencies and build files
+frontend/node_modules/
+frontend/dist/
+frontend/.next/
+
+# Environment files
+.env
+.env.*
+!.env.example

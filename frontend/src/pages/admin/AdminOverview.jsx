@@ -1,0 +1,215 @@
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import { AlertTriangle, Zap, Users, CheckCircle, Clock, MapPin, ArrowRight } from 'lucide-react'
+import { useStore } from '../../hooks/useStore'
+import { StatusBadge, SeverityBadge, CategoryBadge } from '../../components/ui/Badge'
+import MapPlaceholder from '../../components/ui/MapPlaceholder'
+import { formatRelativeTime } from '../../data/store'
+
+export default function AdminOverview() {
+  const navigate = useNavigate()
+  const { incidents, stats } = useStore()
+
+  const recentFeed = incidents
+    .filter(i => !['resolved', 'cancelled'].includes(i.status))
+    .slice(0, 6)
+
+  const metricCards = [
+    {
+      label: 'Active',
+      sublabel: 'Open incidents',
+      value: stats.active,
+      icon: AlertTriangle,
+      color: 'text-white',
+      border: 'border-white/10',
+    },
+    {
+      label: 'Critical',
+      sublabel: 'Immediate action needed',
+      value: stats.critical,
+      icon: Zap,
+      color: 'text-coral',
+      border: 'border-coral/20',
+    },
+    {
+      label: 'Teams Out',
+      sublabel: `of ${stats.teamsTotal} total`,
+      value: stats.teamsDeployed,
+      icon: Users,
+      color: 'text-sage',
+      border: 'border-sage/20',
+    },
+    {
+      label: 'Resolved',
+      sublabel: 'Closed today',
+      value: stats.resolvedToday,
+      icon: CheckCircle,
+      color: 'text-amber',
+      border: 'border-amber/20',
+    },
+  ]
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Metric cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {metricCards.map((card) => {
+          const Icon = card.icon
+          return (
+            <div key={card.label} className={`border ${card.border} rounded p-4 bg-white/5`}>
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="text-2xs font-semibold tracking-widest uppercase text-white/40">{card.label}</p>
+                  <p className="text-3xl font-bold text-white mt-1">{card.value}</p>
+                </div>
+                <Icon size={18} className={card.color} strokeWidth={1.5} />
+              </div>
+              <p className="text-xs text-white/30">{card.sublabel}</p>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Map + feed layout */}
+      <div className="grid lg:grid-cols-5 gap-4">
+        {/* Map panel */}
+        <div className="lg:col-span-3 border border-white/8 rounded overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/8">
+            <div>
+              <p className="text-xs font-semibold text-white/60 uppercase tracking-wider">Incident Map</p>
+              <p className="text-xs text-white/30">{incidents.length} incidents plotted · Chandigarh region</p>
+            </div>
+            <span className="text-2xs text-white/25 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-sage/60 inline-block" />
+              Simulated
+            </span>
+          </div>
+          <MapPlaceholder height="h-72" incidents={incidents} dark={true} />
+          {/* Selected incident preview */}
+          {incidents[0] && (
+            <div className="px-4 py-3 border-t border-white/8">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="w-2 h-2 rounded-full bg-coral" />
+                <span className="text-2xs font-mono text-white/40">{incidents[0].id} · Selected</span>
+              </div>
+              <p className="text-sm font-medium text-white">{incidents[0].description}</p>
+              <p className="text-xs text-white/35">{incidents[0].locationText}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Live feed */}
+        <div className="lg:col-span-2 border border-white/8 rounded overflow-hidden flex flex-col">
+          <div className="px-4 py-2.5 border-b border-white/8">
+            <p className="text-2xs font-semibold tracking-widest uppercase text-white/40">Live Feed</p>
+            <p className="text-sm font-semibold text-white">Recent Activity</p>
+          </div>
+          <div className="flex-1 overflow-y-auto divide-y divide-white/5">
+            {recentFeed.map((inc) => (
+              <button
+                key={inc.id}
+                onClick={() => navigate(`/admin/incidents/${inc.id}`)}
+                className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors group"
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <span className="text-2xs font-mono text-white/30">{inc.id}</span>
+                  <SeverityBadge severity={inc.verifiedSeverity} />
+                </div>
+                <p className="text-xs font-semibold text-white/80 leading-snug mb-1 group-hover:text-white transition-colors">
+                  {inc.description}
+                </p>
+                <div className="flex items-center gap-2 text-2xs text-white/30">
+                  <span className="flex items-center gap-0.5">
+                    <MapPin size={9} /> {inc.locationText}
+                  </span>
+                  <span>·</span>
+                  <span className="flex items-center gap-0.5">
+                    <Clock size={9} /> {formatRelativeTime(inc.createdAt)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <StatusBadge status={inc.status} />
+                  <CategoryBadge category={inc.category} />
+                </div>
+              </button>
+            ))}
+          </div>
+          <div className="px-4 py-2.5 border-t border-white/8">
+            <button
+              onClick={() => navigate('/admin/incidents')}
+              className="text-xs text-white/40 hover:text-white flex items-center gap-1 transition-colors"
+            >
+              View all incidents <ArrowRight size={11} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Incident log strip */}
+      <div className="border border-white/8 rounded overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/8">
+          <p className="text-xs font-semibold text-white/60 uppercase tracking-wider">Incident Log</p>
+          <div className="flex items-center gap-2">
+            <span className="text-2xs text-white/30">All Incidents</span>
+          </div>
+        </div>
+
+        {/* Filter tabs */}
+        <div className="flex gap-1 px-3 py-2 border-b border-white/5 overflow-x-auto">
+          {['All', 'New', 'Assigned', 'En Route', 'On Site', 'Resolved'].map((f) => (
+            <button
+              key={f}
+              className="px-3 py-1 text-xs rounded border border-white/10 text-white/50 hover:bg-white/8 hover:text-white/80 transition-colors whitespace-nowrap"
+            >
+              {f}
+            </button>
+          ))}
+          <button className="ml-auto px-3 py-1 text-xs rounded border border-white/10 text-white/50 hover:bg-white/8 whitespace-nowrap">
+            All severity
+          </button>
+        </div>
+
+        <div className="p-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {incidents.slice(0, 6).map((inc) => (
+            <button
+              key={inc.id}
+              onClick={() => navigate(`/admin/incidents/${inc.id}`)}
+              className="text-left border border-white/8 rounded p-3 hover:bg-white/5 transition-all group"
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-2xs font-mono text-white/30">{inc.id}</span>
+                <SeverityBadge severity={inc.verifiedSeverity} />
+              </div>
+              <p className="text-xs font-semibold text-white/80 leading-snug mb-1 group-hover:text-white">
+                {inc.description}
+              </p>
+              <p className="text-2xs text-white/35 mb-2 line-clamp-2">{inc.fullDescription}</p>
+              <div className="flex items-center gap-1 text-2xs text-white/30 mb-2">
+                <MapPin size={9} />
+                <span>{inc.locationText}</span>
+                <span>·</span>
+                <Clock size={9} />
+                <span>{formatRelativeTime(inc.createdAt)}</span>
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <StatusBadge status={inc.status} />
+                <CategoryBadge category={inc.category} />
+                {!inc.assignedTeamId && (
+                  <span className="text-2xs text-sage/70 ml-auto">Assign</span>
+                )}
+              </div>
+            </button>
+          ))}
+        </div>
+        <div className="px-4 py-2.5 border-t border-white/8 text-center">
+          <button
+            onClick={() => navigate('/admin/incidents')}
+            className="text-xs text-white/40 hover:text-white flex items-center gap-1 transition-colors mx-auto"
+          >
+            Manage all incidents <ArrowRight size={11} />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
