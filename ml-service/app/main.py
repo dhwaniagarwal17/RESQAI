@@ -55,8 +55,12 @@ async def startup_event():
     print("=" * 60)
     
     print("\n[1/2] Loading BERTweet model...")
-    bertweet_service.load_model()
-    print("✓ BERTweet model loaded successfully")
+    try:
+        bertweet_service.load_model()
+        print("✓ BERTweet model loaded successfully")
+    except Exception as e:
+        print(f"⚠ BERTweet model not available: {e}")
+        print("⚠ Will use Gemini-only mode")
     
     print("\n[2/2] Initializing Gemini service...")
     gemini_service.initialize()

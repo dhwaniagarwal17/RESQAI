@@ -22,9 +22,10 @@ class BertweetService:
                 use_fast=False
             )
             
-            # Load model
+            # Load model from local path
             self.model = AutoModelForSequenceClassification.from_pretrained(
-                self.model_path
+                self.model_path,
+                local_files_only=True
             )
             
             self.model.to(self.device)
