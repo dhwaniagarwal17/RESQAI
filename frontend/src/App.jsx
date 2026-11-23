@@ -12,6 +12,7 @@ import RescueShell   from './components/layout/RescueShell'
 
 // Auth pages
 import LoginPage from './pages/auth/LoginPage'
+import RegisterPage from './pages/auth/RegisterPage'
 
 // Landing
 import LandingPage from './pages/landing/LandingPage'
@@ -39,8 +40,9 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           {/* Public */}
-          <Route path="/"       element={<LandingPage />} />
-          <Route path="/login"  element={<LoginPage />} />
+          <Route path="/"        element={<LandingPage />} />
+          <Route path="/login"   element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
           {/* Citizen / Reporter — requires reporter role */}
           <Route

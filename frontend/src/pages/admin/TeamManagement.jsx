@@ -49,23 +49,12 @@ export default function TeamManagement() {
                 <Users size={10} /> {team.memberCount} members
               </p>
 
-              {/* Member avatars */}
+              {/* Member count */}
               <div className="flex items-center gap-1 mb-3">
-                {team.members.slice(0, 4).map((m, i) => (
-                  <div
-                    key={i}
-                    className="w-6 h-6 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-2xs text-white/60 font-medium"
-                    title={m}
-                  >
-                    {m[0]}
-                  </div>
-                ))}
-                {team.members.length > 4 && (
-                  <div className="w-6 h-6 rounded-full bg-white/8 border border-white/10 flex items-center justify-center text-2xs text-white/40">
-                    +{team.members.length - 4}
-                  </div>
-                )}
-                <span className="text-2xs text-white/30 ml-1">{team.memberCount} members active</span>
+                <div className="w-6 h-6 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-2xs text-white/60 font-medium">
+                  <Users size={12} />
+                </div>
+                <span className="text-2xs text-white/30">{team.members || team.memberCount || 0} members active</span>
               </div>
 
               {/* Current assignment */}

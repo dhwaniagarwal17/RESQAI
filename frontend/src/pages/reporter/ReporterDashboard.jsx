@@ -119,7 +119,7 @@ export default function ReporterDashboard() {
             onClick={() => navigate('/reporter/reports')}
             className="text-xs text-carbon/50 hover:text-carbon flex items-center gap-1 transition-colors"
           >
-            {incidents.length} submitted <ArrowRight size={11} />
+            {storeIncidents.length} submitted <ArrowRight size={11} />
           </button>
         </div>
 

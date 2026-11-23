@@ -125,6 +125,17 @@ export default function LoginPage() {
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
+
+          {/* Register link */}
+          <p className="text-center mt-4 text-xs text-carbon/50">
+            Don't have an account?{' '}
+            <button
+              onClick={() => navigate('/register')}
+              className="text-carbon font-medium hover:underline"
+            >
+              Create account
+            </button>
+          </p>
         </div>
 
         {/* Demo credentials */}
