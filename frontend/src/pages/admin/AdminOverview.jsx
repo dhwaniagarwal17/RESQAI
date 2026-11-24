@@ -1,14 +1,102 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, Zap, Users, CheckCircle, Clock, MapPin, ArrowRight } from 'lucide-react'
-import { useStore } from '../../hooks/useStore'
+import { getAllIncidents, getIncidentStats } from '../../services/adminService'
 import { StatusBadge, SeverityBadge, CategoryBadge } from '../../components/ui/Badge'
 import MapPlaceholder from '../../components/ui/MapPlaceholder'
 import { formatRelativeTime } from '../../data/store'
 
 export default function AdminOverview() {
   const navigate = useNavigate()
-  const { incidents, stats } = useStore()
+  const [incidents, setIncidents] = useState([])
+  const [stats, setStats] = useState({
+    active: 0,
+    critical: 0,
+    teamsDeployed: 0,
+    teamsTotal: 10,
+    resolvedToday: 0
+  })
+  const [loading, setLoading] = useState(true)
+
+  // Fetch incidents and stats from API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        
+        // Fetch incidents
+        const incidentsResponse = await getAllIncidents({ limit: 100 })
+        const apiIncidents = incidentsResponse.data?.incidents || []
+        
+        // Transform incidents
+        const transformedIncidents = apiIncidents.map(inc => ({
+          id: inc._id,
+          description: inc.message || inc.description || 'No description',
+          fullDescription: inc.message || inc.description || '',
+          category: inc.category,
+          verifiedSeverity: inc.urgency || inc.priority || 'medium',
+          status: inc.status,
+          locationText: inc.location?.address || `${inc.location?.coordinates?.[1]}, ${inc.location?.coordinates?.[0]}` || 'Unknown',
+          location: inc.location,
+          createdAt: inc.createdAt,
+          reporter: inc.reporter,
+          assignedTeamId: inc.assignedRescueTeam?._id,
+          assignedTeam: inc.assignedRescueTeam,
+        }))
+        
+        setIncidents(transformedIncidents)
+        
+        // Fetch stats
+        try {
+          const statsResponse = await getIncidentStats()
+          const overview = statsResponse.overview || {}
+          
+          // Calculate stats
+          const activeCount = transformedIncidents.filter(i => 
+            !['resolved', 'cancelled', 'rejected'].includes(i.status)
+          ).length
+          
+          const criticalCount = transformedIncidents.filter(i => 
+            i.verifiedSeverity === 'critical' || i.verifiedSeverity === 'high'
+          ).length
+          
+          const teamsDeployed = transformedIncidents.filter(i => 
+            i.assignedTeamId && ['assigned', 'accepted', 'en_route', 'on_site'].includes(i.status)
+          ).length
+          
+          const today = new Date().toDateString()
+          const resolvedToday = transformedIncidents.filter(i => 
+            i.status === 'resolved' && new Date(i.createdAt).toDateString() === today
+          ).length
+          
+          setStats({
+            active: activeCount,
+            critical: criticalCount,
+            teamsDeployed: teamsDeployed,
+            teamsTotal: 10,
+            resolvedToday: resolvedToday
+          })
+        } catch (error) {
+          console.error('Failed to fetch stats:', error)
+        }
+        
+      } catch (error) {
+        console.error('Failed to fetch incidents:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="text-white/50">Loading dashboard...</div>
+      </div>
+    )
+  }
 
   const recentFeed = incidents
     .filter(i => !['resolved', 'cancelled'].includes(i.status))

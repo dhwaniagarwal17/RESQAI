@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Clock, MapPin, Users, ArrowRight } from 'lucide-react'
-import { useStore } from '../../hooks/useStore'
+import { getAllIncidents } from '../../services/adminService'
 import { StatusBadge, SeverityBadge, CategoryBadge } from '../../components/ui/Badge'
 import { formatRelativeTime } from '../../data/store'
 import EmptyState from '../../components/ui/EmptyState'
@@ -11,11 +11,52 @@ const STATUS_OPTS  = ['All', 'submitted', 'under_review', 'assigned', 'accepted'
 
 export default function IncidentManagement() {
   const navigate = useNavigate()
-  const { incidents } = useStore()
+  const [incidents, setIncidents] = useState([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [severity, setSeverity] = useState('All')
   const [status, setStatus] = useState('All')
   const [view, setView] = useState('Cards') // Cards | Table
+
+  // Fetch incidents from API
+  useEffect(() => {
+    const fetchIncidents = async () => {
+      try {
+        setLoading(true)
+        const response = await getAllIncidents({ limit: 1000 })
+        const apiIncidents = response.data?.incidents || []
+        
+        // Transform API incidents to match frontend format
+        const transformedIncidents = apiIncidents.map(inc => ({
+          id: inc._id,
+          description: inc.message || inc.description || 'No description',
+          fullDescription: inc.message || inc.description || '',
+          category: inc.category,
+          verifiedSeverity: inc.urgency || inc.priority || 'medium',
+          status: inc.status,
+          locationText: inc.location?.address || `${inc.location?.coordinates?.[1]}, ${inc.location?.coordinates?.[0]}` || 'Unknown',
+          location: inc.location,
+          createdAt: inc.createdAt,
+          reporter: inc.reporter,
+          assignedTeamId: inc.assignedRescueTeam?._id,
+          assignedTeam: inc.assignedRescueTeam,
+          notes: inc.notes,
+          urgency: inc.urgency,
+          priority: inc.priority,
+          modelUsed: inc.modelUsed,
+          confidence: inc.confidence
+        }))
+        
+        setIncidents(transformedIncidents)
+      } catch (error) {
+        console.error('Failed to fetch incidents:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchIncidents()
+  }, [])
 
   const filtered = incidents.filter((inc) => {
     const matchSearch = !search ||
@@ -26,6 +67,14 @@ export default function IncidentManagement() {
     const matchStatus   = status === 'All'   || inc.status === status
     return matchSearch && matchSeverity && matchStatus
   })
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="text-white/50">Loading incidents...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-6 space-y-4">

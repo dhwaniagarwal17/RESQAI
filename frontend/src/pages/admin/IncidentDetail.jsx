@@ -1,27 +1,110 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Clock, MapPin, Users } from 'lucide-react'
-import { getIncidentById, getTeams, formatRelativeTime, STATUS_LABELS } from '../../data/store'
+import { getIncident } from '../../services/incidentService'
+import { getRescueTeams } from '../../services/adminService'
+import { formatRelativeTime, STATUS_LABELS } from '../../data/store'
 import { StatusBadge, SeverityBadge, CategoryBadge } from '../../components/ui/Badge'
 
 export default function IncidentDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const incident = getIncidentById(id)
-  const teams = getTeams()
+  const [incident, setIncident] = useState(null)
+  const [assignedTeam, setAssignedTeam] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  if (!incident) {
+  useEffect(() => {
+    const fetchIncidentDetails = async () => {
+      try {
+        setLoading(true)
+        
+        // Fetch incident
+        const incidentData = await getIncident(id)
+        
+        if (!incidentData) {
+          setError('Incident not found')
+          return
+        }
+        
+        // Transform incident to match frontend format
+        const transformedIncident = {
+          id: incidentData._id,
+          description: incidentData.message || incidentData.description || 'No description',
+          fullDescription: incidentData.message || incidentData.description || '',
+          category: incidentData.category,
+          verifiedSeverity: incidentData.urgency || incidentData.priority || 'medium',
+          status: incidentData.status,
+          locationText: incidentData.location?.address || 
+                       `${incidentData.location?.coordinates?.[1]}, ${incidentData.location?.coordinates?.[0]}` || 
+                       'Unknown',
+          location: incidentData.location,
+          createdAt: incidentData.createdAt,
+          reporter: incidentData.reporter,
+          reporterName: incidentData.reporter?.name,
+          reporterPhone: incidentData.reporter?.phone,
+          assignedTeamId: incidentData.assignedRescueTeam?._id,
+          notes: incidentData.notes,
+          urgency: incidentData.urgency,
+          priority: incidentData.priority,
+          peopleAffected: incidentData.peopleAffected,
+          reporterUrgency: incidentData.reporterUrgency,
+          classification: {
+            bertweetCategory: incidentData.category,
+            confidence: incidentData.confidence || 0,
+            aiUrgency: incidentData.urgency || 'UNKNOWN',
+            humanitarianStatus: incidentData.humanitarian !== false,
+            geminiUsed: incidentData.modelUsed === 'Gemini',
+            explanation: incidentData.explanation
+          },
+          statusHistory: (incidentData.statusHistory || []).map(h => ({
+            status: h.status,
+            timestamp: h.updatedAt || h.timestamp,
+            note: h.notes
+          }))
+        }
+        
+        setIncident(transformedIncident)
+        
+        // Fetch assigned team if any
+        if (incidentData.assignedRescueTeam) {
+          setAssignedTeam({
+            id: incidentData.assignedRescueTeam._id,
+            fullName: incidentData.assignedRescueTeam.name,
+            memberCount: 5, // Default
+            deploymentStatus: incidentData.status
+          })
+        }
+        
+      } catch (err) {
+        console.error('Failed to fetch incident:', err)
+        setError('Failed to load incident details')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (id) {
+      fetchIncidentDetails()
+    }
+  }, [id])
+
+  if (loading) {
     return (
       <div className="p-8 text-center">
-        <p className="text-white/40 text-sm">Incident not found.</p>
-        <button onClick={() => navigate(-1)} className="mt-3 text-xs text-white/40 underline">Go back</button>
+        <p className="text-white/40 text-sm">Loading incident details...</p>
       </div>
     )
   }
 
-  const assignedTeam = incident.assignedTeamId
-    ? teams.find((t) => t.id === incident.assignedTeamId)
-    : null
+  if (error || !incident) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-white/40 text-sm">{error || 'Incident not found.'}</p>
+        <button onClick={() => navigate(-1)} className="mt-3 text-xs text-white/40 underline">Go back</button>
+      </div>
+    )
+  }
 
   return (
     <div className="p-6 max-w-2xl space-y-6">
