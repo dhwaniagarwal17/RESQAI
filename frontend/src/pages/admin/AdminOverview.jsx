@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, Zap, Users, CheckCircle, Clock, MapPin, ArrowRight } from 'lucide-react'
 import { getAllIncidents, getIncidentStats } from '../../services/adminService'
 import { StatusBadge, SeverityBadge, CategoryBadge } from '../../components/ui/Badge'
-import MapPlaceholder from '../../components/ui/MapPlaceholder'
 import { formatRelativeTime } from '../../data/store'
 
 export default function AdminOverview() {
@@ -159,40 +158,14 @@ export default function AdminOverview() {
       </div>
 
       {/* Map + feed layout */}
-      <div className="grid lg:grid-cols-5 gap-4">
-        {/* Map panel */}
-        <div className="lg:col-span-3 border border-white/8 rounded overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/8">
-            <div>
-              <p className="text-xs font-semibold text-white/60 uppercase tracking-wider">Incident Map</p>
-              <p className="text-xs text-white/50">{incidents.length} incidents plotted · Chandigarh region</p>
-            </div>
-            <span className="text-2xs text-white/40 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-sage/60 inline-block" />
-              Simulated
-            </span>
-          </div>
-          <MapPlaceholder height="h-72" incidents={incidents} dark={true} />
-          {/* Selected incident preview */}
-          {incidents[0] && (
-            <div className="px-4 py-3 border-t border-white/8">
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="w-2 h-2 rounded-full bg-coral" />
-                <span className="text-2xs font-mono text-white/50">{incidents[0].id} · Selected</span>
-              </div>
-              <p className="text-sm font-medium text-white">{incidents[0].description}</p>
-              <p className="text-xs text-white/60">{incidents[0].locationText}</p>
-            </div>
-          )}
-        </div>
-
+      <div className="grid lg:grid-cols-2 gap-4">
         {/* Live feed */}
-        <div className="lg:col-span-2 border border-white/8 rounded overflow-hidden flex flex-col">
+        <div className="border border-white/8 rounded overflow-hidden flex flex-col">
           <div className="px-4 py-2.5 border-b border-white/8">
             <p className="text-2xs font-semibold tracking-widest uppercase text-white/60">Live Feed</p>
             <p className="text-sm font-semibold text-white">Recent Activity</p>
           </div>
-          <div className="flex-1 overflow-y-auto divide-y divide-white/5">
+          <div className="flex-1 overflow-y-auto divide-y divide-white/5" style={{ maxHeight: '400px' }}>
             {recentFeed.map((inc) => (
               <button
                 key={inc.id}
@@ -231,29 +204,46 @@ export default function AdminOverview() {
             </button>
           </div>
         </div>
+
+        {/* Quick Stats Summary */}
+        <div className="border border-white/8 rounded overflow-hidden flex flex-col">
+          <div className="px-4 py-2.5 border-b border-white/8">
+            <p className="text-2xs font-semibold tracking-widest uppercase text-white/60">System Status</p>
+            <p className="text-sm font-semibold text-white">Operations Summary</p>
+          </div>
+          <div className="p-4 space-y-3">
+            <div className="border border-white/8 rounded p-3 bg-white/5">
+              <p className="text-2xs text-white/50 uppercase tracking-wider mb-1">Total Incidents</p>
+              <p className="text-2xl font-bold text-white">{incidents.length}</p>
+            </div>
+            <div className="border border-white/8 rounded p-3 bg-white/5">
+              <p className="text-2xs text-white/50 uppercase tracking-wider mb-1">Response Teams</p>
+              <p className="text-2xl font-bold text-white">{stats.teamsDeployed} / {stats.teamsTotal}</p>
+              <p className="text-2xs text-white/50 mt-1">Currently deployed</p>
+            </div>
+            <div className="border border-white/8 rounded p-3 bg-white/5">
+              <p className="text-2xs text-white/50 uppercase tracking-wider mb-1">Resolved Today</p>
+              <p className="text-2xl font-bold text-sage">{stats.resolvedToday}</p>
+              <p className="text-2xs text-white/50 mt-1">Operations completed</p>
+            </div>
+            <div className="border border-white/8 rounded p-3 bg-white/5">
+              <p className="text-2xs text-white/50 uppercase tracking-wider mb-1">Pending Assignment</p>
+              <p className="text-2xl font-bold text-amber">{incidents.filter(i => i.status === 'submitted' || i.status === 'under_review').length}</p>
+              <p className="text-2xs text-white/50 mt-1">Awaiting team dispatch</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Incident log strip */}
       <div className="border border-white/8 rounded overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/8">
-          <p className="text-xs font-semibold text-white/60 uppercase tracking-wider">Incident Log</p>
-          <div className="flex items-center gap-2">
-            <span className="text-2xs text-white/60">All Incidents</span>
-          </div>
-        </div>
-
-        {/* Filter tabs */}
-        <div className="flex gap-1 px-3 py-2 border-b border-white/5 overflow-x-auto">
-          {['All', 'New', 'Assigned', 'En Route', 'On Site', 'Resolved'].map((f) => (
-            <button
-              key={f}
-              className="px-3 py-1 text-xs rounded border border-white/10 text-white/70 hover:bg-white/8 hover:text-white transition-colors whitespace-nowrap"
-            >
-              {f}
-            </button>
-          ))}
-          <button className="ml-auto px-3 py-1 text-xs rounded border border-white/10 text-white/70 hover:bg-white/8 whitespace-nowrap">
-            All severity
+          <p className="text-xs font-semibold text-white/60 uppercase tracking-wider">Recent Incidents</p>
+          <button
+            onClick={() => navigate('/admin/incidents')}
+            className="text-xs text-white/60 hover:text-white flex items-center gap-1 transition-colors"
+          >
+            View all <ArrowRight size={11} />
           </button>
         </div>
 
