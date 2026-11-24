@@ -135,6 +135,29 @@ export default function IncidentDetail() {
     }
   }
 
+  const handleCloseIncident = async () => {
+    if (!confirm('Mark this incident as resolved? This action will close the incident.')) {
+      return
+    }
+
+    try {
+      await updateIncident(id, { status: 'resolved' })
+      
+      // Refresh incident data
+      const updatedIncident = await getIncident(id)
+      const transformedIncident = {
+        ...incident,
+        status: 'resolved'
+      }
+      setIncident(transformedIncident)
+      
+      alert('Incident marked as resolved')
+    } catch (err) {
+      console.error('Failed to close incident:', err)
+      alert('Failed to close incident. Please try again.')
+    }
+  }
+
   if (loading) {
     return (
       <div className="p-8 text-center">
@@ -163,11 +186,21 @@ export default function IncidentDetail() {
 
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2 mb-1.5">
-          <span className="text-xs font-mono text-white/30">{incident.id}</span>
-          <SeverityBadge severity={incident.verifiedSeverity} />
-          <StatusBadge status={incident.status} />
-          <CategoryBadge category={incident.category} />
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono text-white/30">{incident.id}</span>
+            <SeverityBadge severity={incident.verifiedSeverity} />
+            <StatusBadge status={incident.status} />
+            <CategoryBadge category={incident.category} />
+          </div>
+          {incident.status !== 'resolved' && incident.status !== 'cancelled' && (
+            <button
+              onClick={handleCloseIncident}
+              className="px-3 py-1.5 text-xs bg-sage/20 hover:bg-sage/30 text-sage border border-sage/30 rounded transition-colors font-medium"
+            >
+              Close Incident
+            </button>
+          )}
         </div>
         <h1 className="text-xl font-bold text-white leading-snug mb-2">{incident.description}</h1>
         <p className="text-sm text-white/50 leading-relaxed">{incident.fullDescription}</p>

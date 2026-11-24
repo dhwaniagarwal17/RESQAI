@@ -1,17 +1,13 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapPin, Clock, Users, Navigation, Phone, ChevronRight } from 'lucide-react'
-import { useStore } from '../../hooks/useStore'
-import { getIncidentById, getTeamById, formatRelativeTime } from '../../data/store'
+import { getAssignedIncidents } from '../../services/rescueService'
 import { SeverityBadge, StatusBadge, CategoryBadge } from '../../components/ui/Badge'
 import MapPlaceholder from '../../components/ui/MapPlaceholder'
-
-// Demo: Team Alpha-1 is always assigned to INC-001
-const DEMO_TEAM_ID = 'team-alpha-1'
-const DEMO_INCIDENT_ID = 'INC-001'
+import { formatRelativeTime } from '../../data/store'
 
 const STATUS_STEPS = ['assigned', 'accepted', 'en_route', 'on_site', 'resolved']
-const STEP_LABELS  = ['Assigned', 'Accepted', 'En Route', 'On Site', 'Resolved']
+const STEP_LABELS  = ['Assigned', 'Accepted', 'Responding', 'On Site', 'Resolved']
 
 const EMERGENCY_CONTACTS = [
   { name: 'Operations Centre', number: '0172-XXX-XXXX', type: 'ops' },
@@ -21,19 +17,66 @@ const EMERGENCY_CONTACTS = [
 
 export default function RescueDashboard() {
   const navigate = useNavigate()
-  const { incidents } = useStore()
+  const [incidents, setIncidents] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const incident = getIncidentById(DEMO_INCIDENT_ID)
-  const team     = getTeamById(DEMO_TEAM_ID)
+  useEffect(() => {
+    const fetchAssignedIncidents = async () => {
+      try {
+        setLoading(true)
+        const data = await getAssignedIncidents()
+        
+        // Filter out resolved incidents, show only active assignments
+        const activeIncidents = data.filter(inc => inc.status !== 'resolved' && inc.status !== 'cancelled')
+        setIncidents(activeIncidents)
+      } catch (err) {
+        console.error('Failed to fetch assigned incidents:', err)
+        console.error('Error details:', err.response?.data || err.message)
+        
+        let errorMsg = 'Failed to load your assignments'
+        if (err.response?.data?.message) {
+          errorMsg += ': ' + err.response.data.message
+        } else if (err.message) {
+          errorMsg += ': ' + err.message
+        }
+        
+        setError(errorMsg)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  if (!incident || !team) {
+    fetchAssignedIncidents()
+  }, [])
+
+  if (loading) {
     return (
       <div className="p-8 text-center">
-        <p className="text-carbon/40 text-sm">No active assignment found.</p>
+        <p className="text-carbon/40 text-sm">Loading your assignments...</p>
       </div>
     )
   }
 
+  if (error) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-coral text-sm">{error}</p>
+      </div>
+    )
+  }
+
+  if (incidents.length === 0) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-carbon/40 text-sm">No active assignments found.</p>
+        <p className="text-carbon/30 text-xs mt-1">You'll see your assigned incidents here when dispatched.</p>
+      </div>
+    )
+  }
+
+  // Show the most recent/urgent assignment
+  const incident = incidents[0]
   const currentStepIdx = STATUS_STEPS.indexOf(incident.status)
 
   return (
@@ -45,13 +88,13 @@ export default function RescueDashboard() {
           <div className="border border-carbon/12 rounded bg-white p-5">
             {/* Tags */}
             <div className="flex items-center gap-2 mb-3 flex-wrap">
-              <SeverityBadge severity={incident.verifiedSeverity} />
+              <SeverityBadge severity={incident.urgency || incident.priority || 'medium'} />
               <StatusBadge status={incident.status} />
               <CategoryBadge category={incident.category} />
             </div>
 
-            <h1 className="text-xl font-bold text-carbon mb-1.5">{incident.description}</h1>
-            <p className="text-sm text-carbon/60 leading-relaxed mb-5">{incident.fullDescription}</p>
+            <h1 className="text-xl font-bold text-carbon mb-1.5">{incident.message || 'Emergency Incident'}</h1>
+            <p className="text-sm text-carbon/60 leading-relaxed mb-5">{incident.message || 'Emergency response required'}</p>
 
             {/* Detail grid */}
             <div className="grid grid-cols-2 gap-3">
@@ -59,14 +102,13 @@ export default function RescueDashboard() {
                 <p className="text-2xs text-carbon/35 uppercase tracking-wider mb-0.5">Location</p>
                 <p className="text-sm font-medium text-carbon flex items-center gap-1">
                   <MapPin size={12} className="text-carbon/40" />
-                  {incident.locationText}
+                  {incident.location?.address || 'Location pending'}
                 </p>
               </div>
               <div className="border border-carbon/8 rounded p-3">
-                <p className="text-2xs text-carbon/35 uppercase tracking-wider mb-0.5">Team</p>
-                <p className="text-sm font-medium text-carbon flex items-center gap-1">
-                  <Users size={12} className="text-carbon/40" />
-                  {team.name} · {team.memberCount} members
+                <p className="text-2xs text-carbon/35 uppercase tracking-wider mb-0.5">Reporter</p>
+                <p className="text-sm font-medium text-carbon">
+                  {incident.reporter?.name || 'Anonymous'}
                 </p>
               </div>
               <div className="border border-carbon/8 rounded p-3">
@@ -77,8 +119,8 @@ export default function RescueDashboard() {
                 </p>
               </div>
               <div className="border border-carbon/8 rounded p-3">
-                <p className="text-2xs text-carbon/35 uppercase tracking-wider mb-0.5">Distance</p>
-                <p className="text-sm font-medium text-carbon">3.2 km from base</p>
+                <p className="text-2xs text-carbon/35 uppercase tracking-wider mb-0.5">Priority</p>
+                <p className="text-sm font-medium text-carbon capitalize">{incident.priority || 'Medium'}</p>
               </div>
             </div>
           </div>
@@ -138,7 +180,7 @@ export default function RescueDashboard() {
 
             {/* Action button */}
             <button
-              onClick={() => navigate('/rescue/status')}
+              onClick={() => navigate(`/rescue/status/${incident._id}`)}
               className="mt-4 w-full bg-carbon text-white text-sm font-semibold py-3.5 rounded flex items-center justify-between px-5 hover:bg-carbon/90 transition-colors"
             >
               <span>
@@ -152,26 +194,32 @@ export default function RescueDashboard() {
           </div>
         </div>
 
-        {/* Right: map + contacts + team */}
+        {/* Right: map + contacts */}
         <div className="lg:col-span-2 space-y-4">
           {/* Navigate */}
           <div className="border border-carbon/12 rounded bg-white p-4">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-semibold text-carbon/40 uppercase tracking-wider">Navigate</p>
-              <button className="flex items-center gap-1 text-xs text-carbon/50 hover:text-carbon border border-carbon/15 rounded px-2 py-1 transition-colors">
-                <Navigation size={11} strokeWidth={1.75} />
-                Open Maps
-              </button>
+              {incident.location?.latitude && incident.location?.longitude && (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${incident.location.latitude},${incident.location.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs text-carbon/50 hover:text-carbon border border-carbon/15 rounded px-2 py-1 transition-colors"
+                >
+                  <Navigation size={11} strokeWidth={1.75} />
+                  Open Maps
+                </a>
+              )}
             </div>
             <MapPlaceholder
               height="h-36"
               incidents={[incident]}
-              label="SIMULATED — MAP INTEGRATION PENDING"
-              locationLabel={incident.locationText}
+              locationLabel={incident.location?.address || 'Location pending'}
             />
             <p className="text-xs text-carbon/40 mt-2 flex items-center gap-1">
               <MapPin size={11} />
-              {incident.locationText}, Chandigarh
+              {incident.location?.address || 'Location coordinates available'}
             </p>
           </div>
 
@@ -185,39 +233,38 @@ export default function RescueDashboard() {
                     <p className="text-xs font-medium text-carbon">{c.name}</p>
                     <p className="text-2xs text-carbon/40">{c.number}</p>
                   </div>
-                  <button
+                  <a
+                    href={`tel:${c.number}`}
                     className="w-7 h-7 rounded-full border border-carbon/15 flex items-center justify-center hover:bg-carbon hover:text-white hover:border-carbon transition-all"
                     aria-label={`Call ${c.name}`}
                   >
                     <Phone size={11} strokeWidth={1.75} className="text-carbon/50" />
-                  </button>
+                  </a>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Team */}
-          <div className="border border-carbon/12 rounded bg-white p-4">
-            <p className="text-xs font-semibold text-carbon/40 uppercase tracking-wider mb-3">{team.fullName}</p>
-            <div className="flex items-center gap-1 flex-wrap mb-2">
-              {team.members.map((m, i) => (
-                <div
-                  key={i}
-                  className="w-7 h-7 rounded-full bg-carbon/8 border border-carbon/10 flex items-center justify-center text-xs text-carbon/60 font-medium"
-                  title={m}
-                >
-                  {m[0]}
-                </div>
-              ))}
+          {/* Reporter Contact */}
+          {incident.reporter && (
+            <div className="border border-carbon/12 rounded bg-white p-4">
+              <p className="text-xs font-semibold text-carbon/40 uppercase tracking-wider mb-3">Reporter Contact</p>
+              <div>
+                <p className="text-sm font-medium text-carbon">{incident.reporter.name}</p>
+                {incident.reporter.phone && (
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-xs text-carbon/40">{incident.reporter.phone}</p>
+                    <a
+                      href={`tel:${incident.reporter.phone}`}
+                      className="w-7 h-7 rounded-full border border-carbon/15 flex items-center justify-center hover:bg-carbon hover:text-white hover:border-carbon transition-all"
+                    >
+                      <Phone size={11} strokeWidth={1.75} className="text-carbon/50" />
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
-            <p className="text-2xs text-carbon/40">{team.memberCount} members active</p>
-            <div className="mt-2 pt-2 border-t border-carbon/8">
-              <span className="text-2xs text-sage flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-sage inline-block" />
-                {team.deploymentStatus}
-              </span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

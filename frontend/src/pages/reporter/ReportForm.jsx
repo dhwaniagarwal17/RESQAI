@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, AlertCircle, CheckCircle, FileText, Loader } from 'lucide-react'
+import { ArrowLeft, AlertCircle, CheckCircle, FileText, Loader, MapPin } from 'lucide-react'
 import { createIncident } from '../../services/incidentService'
 import { useAuth } from '../../context/AuthContext'
 
@@ -39,12 +39,56 @@ export default function ReportForm() {
   const [form, setForm]       = useState(INITIAL)
   const [errors, setErrors]   = useState({})
   const [loading, setLoading] = useState(false)
+  const [locationLoading, setLocationLoading] = useState(false)
   const [apiError, setApiError] = useState(null)
   const [submitted, setSubmitted] = useState(null) // { id, createdAt, category }
+  const [coordinates, setCoordinates] = useState(null) // { latitude, longitude }
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }))
     setErrors((e) => ({ ...e, [field]: undefined }))
+  }
+
+  async function getCurrentLocation() {
+    if (!navigator.geolocation) {
+      setApiError('Geolocation is not supported by your browser')
+      return
+    }
+
+    setLocationLoading(true)
+    setApiError(null)
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords
+        setCoordinates({ latitude, longitude })
+        
+        // Update form with coordinates
+        update('locationText', `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`)
+        setLocationLoading(false)
+      },
+      (error) => {
+        let errorMessage = 'Unable to retrieve your location'
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Location permission denied. Please enable location access in your browser settings.'
+            break
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information unavailable'
+            break
+          case error.TIMEOUT:
+            errorMessage = 'Location request timed out'
+            break
+        }
+        setApiError(errorMessage)
+        setLocationLoading(false)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    )
   }
 
   function validate() {
@@ -85,6 +129,11 @@ export default function ReportForm() {
       message,
       location: {
         address: form.locationText.trim(),
+        ...(coordinates && {
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
+          coordinates: [coordinates.longitude, coordinates.latitude] // GeoJSON format [lng, lat]
+        })
       },
       // Extra fields stored for display purposes (not in backend schema yet, so stored separately)
       _meta: {
@@ -301,17 +350,38 @@ export default function ReportForm() {
           <label className="block text-xs font-medium text-carbon/70 mb-1" htmlFor="locationText">
             Location / Address <span className="text-coral">*</span>
           </label>
-          <input
-            id="locationText"
-            type="text"
-            value={form.locationText}
-            onChange={(e) => update('locationText', e.target.value)}
-            placeholder="Street, neighbourhood, landmark…"
-            className={`w-full border rounded px-3 py-2 text-sm text-carbon placeholder-carbon/30 focus:outline-none focus:ring-1 transition-colors ${
-              errors.locationText ? 'border-coral focus:border-coral focus:ring-coral/20' : 'border-carbon/20 focus:border-carbon/50 focus:ring-carbon/15'
-            }`}
-            disabled={loading}
-          />
+          <div className="flex gap-2">
+            <input
+              id="locationText"
+              type="text"
+              value={form.locationText}
+              onChange={(e) => update('locationText', e.target.value)}
+              placeholder="Street, neighbourhood, landmark…"
+              className={`flex-1 border rounded px-3 py-2 text-sm text-carbon placeholder-carbon/30 focus:outline-none focus:ring-1 transition-colors ${
+                errors.locationText ? 'border-coral focus:border-coral focus:ring-coral/20' : 'border-carbon/20 focus:border-carbon/50 focus:ring-carbon/15'
+              }`}
+              disabled={loading || locationLoading}
+            />
+            <button
+              type="button"
+              onClick={getCurrentLocation}
+              disabled={loading || locationLoading}
+              className="px-3 py-2 border border-carbon/20 rounded text-carbon/60 hover:text-carbon hover:border-carbon/40 transition-colors disabled:opacity-50 flex items-center gap-1.5 text-xs font-medium"
+              title="Use current location"
+            >
+              {locationLoading ? (
+                <Loader size={14} className="animate-spin" />
+              ) : (
+                <MapPin size={14} />
+              )}
+              Use Current
+            </button>
+          </div>
+          {coordinates && (
+            <p className="text-2xs text-sage mt-1 flex items-center gap-1">
+              <MapPin size={10} /> GPS coordinates captured
+            </p>
+          )}
           {errors.locationText && <p className="text-2xs text-coral mt-1">{errors.locationText}</p>}
         </div>
 

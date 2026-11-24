@@ -84,8 +84,9 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route index         element={<RescueDashboard />} />
-            <Route path="status" element={<StatusUpdate />} />
+            <Route index            element={<RescueDashboard />} />
+            <Route path="status"    element={<StatusUpdate />} />
+            <Route path="status/:id" element={<StatusUpdate />} />
           </Route>
 
           {/* Fallback */}

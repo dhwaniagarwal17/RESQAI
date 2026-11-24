@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Radio, AlertTriangle, CheckCircle, Loader } from 'lucide-react'
+import { ArrowLeft, Radio, AlertTriangle, CheckCircle, Loader, MapPin } from 'lucide-react'
 import { createIncident } from '../../services/incidentService'
 import { useAuth } from '../../context/AuthContext'
 
@@ -14,6 +14,48 @@ export default function SOSPage() {
   const [details, setDetails] = useState('')
   const [error, setError] = useState(null)
   const [incidentId, setIncidentId] = useState(null)
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [coordinates, setCoordinates] = useState(null)
+
+  async function getCurrentLocation() {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by your browser')
+      return
+    }
+
+    setLocationLoading(true)
+    setError(null)
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords
+        setCoordinates({ latitude, longitude })
+        setLocation(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`)
+        setLocationLoading(false)
+      },
+      (err) => {
+        let errorMessage = 'Unable to retrieve your location'
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            errorMessage = 'Location permission denied'
+            break
+          case err.POSITION_UNAVAILABLE:
+            errorMessage = 'Location unavailable'
+            break
+          case err.TIMEOUT:
+            errorMessage = 'Location request timed out'
+            break
+        }
+        setError(errorMessage)
+        setLocationLoading(false)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    )
+  }
 
   async function handleSend() {
     setStep(STEP.SENDING)
@@ -27,7 +69,14 @@ export default function SOSPage() {
       if (isAuthenticated) {
         incident = await createIncident({
           message,
-          location: { address: location },
+          location: {
+            address: location,
+            ...(coordinates && {
+              latitude: coordinates.latitude,
+              longitude: coordinates.longitude,
+              coordinates: [coordinates.longitude, coordinates.latitude]
+            })
+          },
         })
       } else {
         const { addIncident } = await import('../../data/store')
@@ -164,13 +213,35 @@ export default function SOSPage() {
         <div className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-carbon/70 mb-1">Your location</label>
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Street, landmark, area…"
-              className="w-full border border-carbon/20 rounded px-3 py-2 text-sm text-carbon placeholder-carbon/30 focus:outline-none focus:border-coral/50 focus:ring-1 focus:ring-coral/15 transition-colors"
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Street, landmark, area…"
+                disabled={locationLoading}
+                className="flex-1 border border-carbon/20 rounded px-3 py-2 text-sm text-carbon placeholder-carbon/30 focus:outline-none focus:border-coral/50 focus:ring-1 focus:ring-coral/15 transition-colors disabled:opacity-50"
+              />
+              <button
+                type="button"
+                onClick={getCurrentLocation}
+                disabled={locationLoading}
+                className="px-3 py-2 border border-carbon/20 rounded text-carbon/60 hover:text-carbon hover:border-carbon/40 transition-colors disabled:opacity-50 flex items-center gap-1.5 text-xs font-medium"
+                title="Use current location"
+              >
+                {locationLoading ? (
+                  <Loader size={14} className="animate-spin" />
+                ) : (
+                  <MapPin size={14} />
+                )}
+                Use Current
+              </button>
+            </div>
+            {coordinates && (
+              <p className="text-2xs text-sage mt-1 flex items-center gap-1">
+                <MapPin size={10} /> GPS coordinates captured
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-xs font-medium text-carbon/70 mb-1">Brief description (optional)</label>
