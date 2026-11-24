@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, AlertTriangle, Users, RefreshCw, Bell, LogOut } from 'lucide-react'
-import RoleSwitcher from './RoleSwitcher'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { LayoutDashboard, AlertTriangle, Users, RefreshCw, LogOut } from 'lucide-react'
 import { useStore } from '../../hooks/useStore'
 import { useAuth } from '../../context/AuthContext'
 
@@ -14,11 +13,25 @@ const navItems = [
 export default function AdminShell() {
   const { role, setRole, refresh } = useStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const { logout } = useAuth()
+  const [refreshing, setRefreshing] = useState(false)
 
   function handleLogout() {
     logout()
     navigate('/login')
+  }
+
+  async function handleRefresh() {
+    setRefreshing(true)
+    try {
+      // Reload the current page to fetch fresh data
+      window.location.reload()
+    } catch (error) {
+      console.error('Refresh failed:', error)
+    } finally {
+      setTimeout(() => setRefreshing(false), 500)
+    }
   }
 
   return (
@@ -60,10 +73,6 @@ export default function AdminShell() {
             )
           })}
         </nav>
-
-        <div className="border-t border-white/8 mt-auto">
-          <RoleSwitcher activeRole={role} onRoleChange={setRole} />
-        </div>
       </aside>
 
       {/* Main */}
@@ -76,18 +85,13 @@ export default function AdminShell() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={refresh}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium text-white/50 hover:text-white hover:bg-white/8 transition-colors"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium text-white/50 hover:text-white hover:bg-white/8 transition-colors disabled:opacity-50"
+              title="Refresh data"
             >
-              <RefreshCw size={12} strokeWidth={1.75} />
+              <RefreshCw size={12} strokeWidth={1.75} className={refreshing ? 'animate-spin' : ''} />
               Refresh
-            </button>
-            <button
-              className="relative w-8 h-8 flex items-center justify-center rounded hover:bg-white/8 transition-colors text-white/50 hover:text-white"
-              aria-label="Notifications"
-            >
-              <Bell size={16} strokeWidth={1.75} />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-coral" />
             </button>
             <button
               onClick={handleLogout}

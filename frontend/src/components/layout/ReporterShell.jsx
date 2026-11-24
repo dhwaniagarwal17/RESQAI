@@ -1,7 +1,6 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, FileText, Bell, LogOut } from 'lucide-react'
-import RoleSwitcher from './RoleSwitcher'
+import { LayoutDashboard, FileText, LogOut } from 'lucide-react'
 import { useStore } from '../../hooks/useStore'
 import { useAuth } from '../../context/AuthContext'
 
@@ -14,7 +13,6 @@ export default function ReporterShell() {
   const { role, setRole } = useStore()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
-  const [notifOpen, setNotifOpen] = useState(false)
 
   function handleLogout() {
     logout()
@@ -60,10 +58,6 @@ export default function ReporterShell() {
             )
           })}
         </nav>
-
-        <div className="border-t border-carbon/10 mt-auto">
-          <RoleSwitcher activeRole={role} onRoleChange={setRole} />
-        </div>
       </aside>
 
       {/* Main */}
@@ -74,14 +68,6 @@ export default function ReporterShell() {
             <p className="text-sm font-semibold text-carbon">Citizen Portal</p>
             <p className="text-xs text-carbon/40">AI-Assisted Disaster Response</p>
           </div>
-          <button
-            onClick={() => setNotifOpen(!notifOpen)}
-            className="relative w-8 h-8 flex items-center justify-center rounded hover:bg-carbon/8 transition-colors text-carbon/50 hover:text-carbon"
-            aria-label="Notifications"
-          >
-            <Bell size={16} strokeWidth={1.75} />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-coral" />
-          </button>
           <button
             onClick={handleLogout}
             className="w-8 h-8 flex items-center justify-center rounded hover:bg-carbon/8 transition-colors text-carbon/50 hover:text-carbon"

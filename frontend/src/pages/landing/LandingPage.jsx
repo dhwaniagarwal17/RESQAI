@@ -1,30 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, LogIn } from 'lucide-react'
-
-const portals = [
-  {
-    role: 'CITIZEN',
-    title: 'Report an Emergency',
-    description: 'Submit incident reports, send SOS, and track the status of your case in real time.',
-    cta: 'Open Citizen Portal',
-    path: '/reporter',
-  },
-  {
-    role: 'ADMINISTRATOR',
-    title: 'Operations Dashboard',
-    description: 'Monitor classified incidents, review AI analysis, and coordinate rescue team deployments.',
-    cta: 'Open Admin Console',
-    path: '/admin',
-  },
-  {
-    role: 'RESCUE TEAM',
-    title: 'Field Assignment',
-    description: 'View your assigned incident, navigate to the site, and update your response status.',
-    cta: 'Open Team Dashboard',
-    path: '/rescue',
-  },
-]
+import { LogIn, ArrowRight } from 'lucide-react'
 
 export default function LandingPage() {
   const navigate = useNavigate()
@@ -56,28 +32,50 @@ export default function LandingPage() {
         </h1>
       </div>
 
-      <p className="text-center text-carbon/50 max-w-sm text-sm leading-relaxed mb-12">
+      <p className="text-center text-carbon/50 max-w-md text-base leading-relaxed mb-8">
         RESQAI routes disaster-related messages through a hybrid AI pipeline — classifying urgency, category, and location so responders can act faster.
       </p>
 
-      {/* Portal cards */}
-      <div className="grid sm:grid-cols-3 gap-6 w-full max-w-3xl">
-        {portals.map((p) => (
-          <button
-            key={p.role}
-            onClick={() => navigate(p.path)}
-            className="group text-left border border-carbon/12 rounded bg-linen hover:bg-white hover:border-carbon/20 hover:shadow-sm transition-all duration-200 p-5"
-          >
-            <p className="text-2xs font-semibold tracking-widest uppercase text-coral mb-3">{p.role}</p>
-            <div className="w-8 h-px bg-carbon/20 mb-3" />
-            <p className="font-semibold text-carbon text-sm mb-2">{p.title}</p>
-            <p className="text-xs text-carbon/50 leading-relaxed mb-4">{p.description}</p>
-            <span className="inline-flex items-center gap-1 text-xs text-carbon/50 group-hover:text-carbon transition-colors">
-              {p.cta}
-              <ArrowRight size={11} strokeWidth={2} />
-            </span>
-          </button>
-        ))}
+      {/* CTA Button */}
+      <button
+        onClick={() => navigate('/login')}
+        className="inline-flex items-center gap-2 px-6 py-3 bg-coral text-white rounded-lg hover:bg-coral/90 transition-colors text-base font-semibold shadow-lg hover:shadow-xl"
+      >
+        Get Started
+        <ArrowRight size={18} strokeWidth={2} />
+      </button>
+
+      {/* Features */}
+      <div className="mt-16 grid sm:grid-cols-3 gap-8 w-full max-w-3xl">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-coral/10 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full bg-coral"></div>
+          </div>
+          <h3 className="font-semibold text-carbon text-sm mb-1">AI-Powered Classification</h3>
+          <p className="text-xs text-carbon/50 leading-relaxed">
+            Hybrid BERTweet + Gemini model automatically categorizes incidents by urgency and type
+          </p>
+        </div>
+        
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-sage/10 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full bg-sage"></div>
+          </div>
+          <h3 className="font-semibold text-carbon text-sm mb-1">Real-Time Coordination</h3>
+          <p className="text-xs text-carbon/50 leading-relaxed">
+            Instant incident routing to rescue teams with live status updates and tracking
+          </p>
+        </div>
+        
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-amber/10 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full bg-amber"></div>
+          </div>
+          <h3 className="font-semibold text-carbon text-sm mb-1">Emergency SOS</h3>
+          <p className="text-xs text-carbon/50 leading-relaxed">
+            One-tap emergency alerts with location sharing for critical situations
+          </p>
+        </div>
       </div>
     </div>
   )

@@ -1,7 +1,6 @@
 import React from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { ClipboardList, Activity, Bell, LogOut } from 'lucide-react'
-import RoleSwitcher from './RoleSwitcher'
+import { ClipboardList, Activity, LogOut } from 'lucide-react'
 import { useStore } from '../../hooks/useStore'
 import { useAuth } from '../../context/AuthContext'
 
@@ -61,10 +60,6 @@ export default function RescueShell() {
             )
           })}
         </nav>
-
-        <div className="border-t border-carbon/10 mt-auto">
-          <RoleSwitcher activeRole={role} onRoleChange={setRole} />
-        </div>
       </aside>
 
       {/* Main */}
@@ -75,22 +70,14 @@ export default function RescueShell() {
             <p className="text-sm font-semibold text-carbon">My Assignment</p>
             <p className="text-xs text-carbon/40">Team Alpha-1 · Field Response</p>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              className="relative w-8 h-8 flex items-center justify-center rounded hover:bg-carbon/8 transition-colors text-carbon/50 hover:text-carbon"
-              aria-label="Notifications"
-            >
-              <Bell size={16} strokeWidth={1.75} />
-            </button>
-            <button
-              onClick={handleLogout}
-              className="w-8 h-8 flex items-center justify-center rounded hover:bg-carbon/8 transition-colors text-carbon/50 hover:text-carbon"
-              aria-label="Log out"
-              title="Log out"
-            >
-              <LogOut size={15} strokeWidth={1.75} />
-            </button>
-          </div>
+          <button
+            onClick={handleLogout}
+            className="w-8 h-8 flex items-center justify-center rounded hover:bg-carbon/8 transition-colors text-carbon/50 hover:text-carbon"
+            aria-label="Log out"
+            title="Log out"
+          >
+            <LogOut size={15} strokeWidth={1.75} />
+          </button>
         </header>
 
         {/* Page content */}
