@@ -135,7 +135,7 @@ export default function IncidentManagement() {
         </select>
       </div>
 
-      <p className="text-2xs text-white/30">{filtered.length} incident{filtered.length !== 1 ? 's' : ''}</p>
+      <p className="text-2xs text-white/60">{filtered.length} incident{filtered.length !== 1 ? 's' : ''}</p>
 
       {/* Incident cards */}
       {filtered.length === 0 ? (
@@ -152,13 +152,13 @@ export default function IncidentManagement() {
                 <span className="text-2xs font-mono text-white/30">{inc.id}</span>
                 <SeverityBadge severity={inc.verifiedSeverity} />
               </div>
-              <p className="text-sm font-semibold text-white/85 leading-snug mb-1 group-hover:text-white">
+              <p className="text-sm font-semibold text-white leading-snug mb-1 group-hover:text-white">
                 {inc.description}
               </p>
-              <p className="text-2xs text-white/35 mb-2.5 line-clamp-2 leading-relaxed">
+              <p className="text-2xs text-white/70 mb-2.5 line-clamp-2 leading-relaxed">
                 {inc.fullDescription}
               </p>
-              <div className="flex items-center gap-2 text-2xs text-white/30 mb-2.5">
+              <div className="flex items-center gap-2 text-2xs text-white/60 mb-2.5">
                 <MapPin size={9} /> {inc.locationText}
                 <span>·</span>
                 <Clock size={9} /> {formatRelativeTime(inc.createdAt)}
@@ -167,7 +167,7 @@ export default function IncidentManagement() {
                 <StatusBadge status={inc.status} />
                 <CategoryBadge category={inc.category} />
                 {!inc.assignedTeamId && !['resolved','cancelled'].includes(inc.status) && (
-                  <span className="ml-auto text-2xs text-sage/60 hover:text-sage">Assign →</span>
+                  <span className="ml-auto text-2xs text-sage hover:text-sage">Assign →</span>
                 )}
               </div>
             </button>

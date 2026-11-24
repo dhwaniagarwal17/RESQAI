@@ -15,9 +15,9 @@ const statusMap = {
   accepted:     'bg-sage/15 text-sage border-sage/30',
   en_route:     'bg-amber/10 text-amber border-amber/30',
   on_site:      'bg-coral/10 text-coral border-coral/30',
-  resolved:     'bg-carbon/8 text-carbon/50 border-carbon/15',
+  resolved:     'bg-sage/15 text-sage border-sage/30',
   rejected:     'bg-coral/10 text-coral border-coral/30',
-  cancelled:    'bg-carbon/8 text-carbon/40 border-carbon/15',
+  cancelled:    'bg-carbon/8 text-carbon/60 border-carbon/15',
 }
 
 export function SeverityBadge({ severity }) {
@@ -56,7 +56,7 @@ export function StatusBadge({ status }) {
 
 export function CategoryBadge({ category }) {
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded text-2xs font-medium border bg-carbon/5 text-carbon/60 border-carbon/15 tracking-wide">
+    <span className="inline-flex items-center px-2 py-0.5 rounded text-2xs font-medium border bg-carbon/5 text-white/80 border-carbon/15 tracking-wide">
       {category}
     </span>
   )

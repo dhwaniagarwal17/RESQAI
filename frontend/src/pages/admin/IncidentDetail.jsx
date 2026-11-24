@@ -203,7 +203,7 @@ export default function IncidentDetail() {
           )}
         </div>
         <h1 className="text-xl font-bold text-white leading-snug mb-2">{incident.description}</h1>
-        <p className="text-sm text-white/50 leading-relaxed">{incident.fullDescription}</p>
+        <p className="text-sm text-white/70 leading-relaxed">{incident.fullDescription}</p>
       </div>
 
       {/* Meta grid */}
@@ -215,7 +215,7 @@ export default function IncidentDetail() {
           { label: 'Reporter Urgency', value: incident.reporterUrgency || '—' },
         ].map((item) => (
           <div key={item.label} className="border border-white/8 rounded p-3">
-            <p className="text-2xs text-white/30 uppercase tracking-wider mb-0.5">{item.label}</p>
+            <p className="text-2xs text-white/50 uppercase tracking-wider mb-0.5">{item.label}</p>
             <p className="text-sm font-medium text-white">{item.value}</p>
           </div>
         ))}
@@ -224,9 +224,9 @@ export default function IncidentDetail() {
       {/* Reporter info */}
       {incident.reporterName && (
         <div className="border border-white/8 rounded p-4">
-          <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">Reporter</p>
+          <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">Reporter</p>
           <p className="text-sm text-white">{incident.reporterName}</p>
-          {incident.reporterPhone && <p className="text-xs text-white/40">{incident.reporterPhone}</p>}
+          {incident.reporterPhone && <p className="text-xs text-white/60">{incident.reporterPhone}</p>}
         </div>
       )}
 
@@ -234,31 +234,31 @@ export default function IncidentDetail() {
       {incident.classification && (
         <div className="border border-white/8 rounded p-4">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">AI Classification</p>
-            <span className="text-2xs text-white/25 border border-white/10 px-1.5 py-0.5 rounded">
+            <p className="text-xs font-semibold text-white/50 uppercase tracking-wider">AI Classification</p>
+            <span className="text-2xs text-white/40 border border-white/10 px-1.5 py-0.5 rounded">
               {incident.classification.geminiUsed ? 'Gemini + BERTweet' : 'BERTweet'}
             </span>
           </div>
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
-              <p className="text-white/30 mb-0.5">Category</p>
+              <p className="text-white/50 mb-0.5">Category</p>
               <p className="text-white font-medium">{incident.classification.bertweetCategory}</p>
             </div>
             <div>
-              <p className="text-white/30 mb-0.5">Confidence</p>
+              <p className="text-white/50 mb-0.5">Confidence</p>
               <p className="text-white font-medium">{Math.round(incident.classification.confidence * 100)}%</p>
             </div>
             <div>
-              <p className="text-white/30 mb-0.5">AI Urgency</p>
+              <p className="text-white/50 mb-0.5">AI Urgency</p>
               <p className="text-white font-medium">{incident.classification.aiUrgency}</p>
             </div>
             <div>
-              <p className="text-white/30 mb-0.5">Humanitarian</p>
+              <p className="text-white/50 mb-0.5">Humanitarian</p>
               <p className="text-white font-medium">{incident.classification.humanitarianStatus ? 'Yes' : 'No'}</p>
             </div>
           </div>
           {incident.classification.explanation && (
-            <p className="text-2xs text-white/30 mt-3 pt-3 border-t border-white/8 italic leading-relaxed">
+            <p className="text-2xs text-white/60 mt-3 pt-3 border-t border-white/8 italic leading-relaxed">
               "{incident.classification.explanation}"
             </p>
           )}
@@ -268,7 +268,7 @@ export default function IncidentDetail() {
       {/* Assignment */}
       <div className="border border-white/8 rounded p-4">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Assignment</p>
+          <p className="text-xs font-semibold text-white/50 uppercase tracking-wider">Assignment</p>
           {!assignedTeam && (
             <button
               onClick={() => setShowAssignModal(true)}
@@ -281,10 +281,10 @@ export default function IncidentDetail() {
         {assignedTeam ? (
           <div>
             <p className="text-sm font-medium text-sage">{assignedTeam.fullName}</p>
-            <p className="text-xs text-white/40">{assignedTeam.memberCount} members · {assignedTeam.deploymentStatus}</p>
+            <p className="text-xs text-white/60">{assignedTeam.memberCount} members · {assignedTeam.deploymentStatus}</p>
           </div>
         ) : (
-          <p className="text-xs text-white/30">No team assigned yet.</p>
+          <p className="text-xs text-white/50">No team assigned yet.</p>
         )}
       </div>
 
@@ -335,15 +335,15 @@ export default function IncidentDetail() {
 
       {/* Status history */}
       <div>
-        <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Status History</p>
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-3">Status History</p>
         <div className="space-y-2">
           {(incident.statusHistory || []).map((h, i) => (
             <div key={i} className="flex items-start gap-2 text-xs">
-              <div className="w-1.5 h-1.5 rounded-full bg-white/20 mt-1.5 flex-shrink-0" />
+              <div className="w-1.5 h-1.5 rounded-full bg-white/40 mt-1.5 flex-shrink-0" />
               <div>
                 <span className="text-white font-medium">{STATUS_LABELS[h.status] || h.status}</span>
-                <span className="text-white/30 ml-2">{formatRelativeTime(h.timestamp)}</span>
-                {h.note && <p className="text-white/30 mt-0.5">{h.note}</p>}
+                <span className="text-white/50 ml-2">{formatRelativeTime(h.timestamp)}</span>
+                {h.note && <p className="text-white/60 mt-0.5">{h.note}</p>}
               </div>
             </div>
           ))}

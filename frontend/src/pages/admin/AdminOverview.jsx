@@ -147,12 +147,12 @@ export default function AdminOverview() {
             <div key={card.label} className={`border ${card.border} rounded p-4 bg-white/5`}>
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <p className="text-2xs font-semibold tracking-widest uppercase text-white/40">{card.label}</p>
+                  <p className="text-2xs font-semibold tracking-widest uppercase text-white/60">{card.label}</p>
                   <p className="text-3xl font-bold text-white mt-1">{card.value}</p>
                 </div>
                 <Icon size={18} className={card.color} strokeWidth={1.5} />
               </div>
-              <p className="text-xs text-white/30">{card.sublabel}</p>
+              <p className="text-xs text-white/70">{card.sublabel}</p>
             </div>
           )
         })}
@@ -165,9 +165,9 @@ export default function AdminOverview() {
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/8">
             <div>
               <p className="text-xs font-semibold text-white/60 uppercase tracking-wider">Incident Map</p>
-              <p className="text-xs text-white/30">{incidents.length} incidents plotted · Chandigarh region</p>
+              <p className="text-xs text-white/50">{incidents.length} incidents plotted · Chandigarh region</p>
             </div>
-            <span className="text-2xs text-white/25 flex items-center gap-1">
+            <span className="text-2xs text-white/40 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-sage/60 inline-block" />
               Simulated
             </span>
@@ -178,10 +178,10 @@ export default function AdminOverview() {
             <div className="px-4 py-3 border-t border-white/8">
               <div className="flex items-center gap-2 mb-0.5">
                 <span className="w-2 h-2 rounded-full bg-coral" />
-                <span className="text-2xs font-mono text-white/40">{incidents[0].id} · Selected</span>
+                <span className="text-2xs font-mono text-white/50">{incidents[0].id} · Selected</span>
               </div>
               <p className="text-sm font-medium text-white">{incidents[0].description}</p>
-              <p className="text-xs text-white/35">{incidents[0].locationText}</p>
+              <p className="text-xs text-white/60">{incidents[0].locationText}</p>
             </div>
           )}
         </div>
@@ -189,7 +189,7 @@ export default function AdminOverview() {
         {/* Live feed */}
         <div className="lg:col-span-2 border border-white/8 rounded overflow-hidden flex flex-col">
           <div className="px-4 py-2.5 border-b border-white/8">
-            <p className="text-2xs font-semibold tracking-widest uppercase text-white/40">Live Feed</p>
+            <p className="text-2xs font-semibold tracking-widest uppercase text-white/60">Live Feed</p>
             <p className="text-sm font-semibold text-white">Recent Activity</p>
           </div>
           <div className="flex-1 overflow-y-auto divide-y divide-white/5">
@@ -200,13 +200,13 @@ export default function AdminOverview() {
                 className="w-full text-left px-4 py-3 hover:bg-white/5 transition-colors group"
               >
                 <div className="flex items-start justify-between gap-2 mb-1">
-                  <span className="text-2xs font-mono text-white/30">{inc.id}</span>
+                  <span className="text-2xs font-mono text-white/50">{inc.id}</span>
                   <SeverityBadge severity={inc.verifiedSeverity} />
                 </div>
-                <p className="text-xs font-semibold text-white/80 leading-snug mb-1 group-hover:text-white transition-colors">
+                <p className="text-xs font-semibold text-white leading-snug mb-1 group-hover:text-white transition-colors">
                   {inc.description}
                 </p>
-                <div className="flex items-center gap-2 text-2xs text-white/30">
+                <div className="flex items-center gap-2 text-2xs text-white/50">
                   <span className="flex items-center gap-0.5">
                     <MapPin size={9} /> {inc.locationText}
                   </span>
@@ -225,7 +225,7 @@ export default function AdminOverview() {
           <div className="px-4 py-2.5 border-t border-white/8">
             <button
               onClick={() => navigate('/admin/incidents')}
-              className="text-xs text-white/40 hover:text-white flex items-center gap-1 transition-colors"
+              className="text-xs text-white/60 hover:text-white flex items-center gap-1 transition-colors"
             >
               View all incidents <ArrowRight size={11} />
             </button>
@@ -238,7 +238,7 @@ export default function AdminOverview() {
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/8">
           <p className="text-xs font-semibold text-white/60 uppercase tracking-wider">Incident Log</p>
           <div className="flex items-center gap-2">
-            <span className="text-2xs text-white/30">All Incidents</span>
+            <span className="text-2xs text-white/60">All Incidents</span>
           </div>
         </div>
 
@@ -247,12 +247,12 @@ export default function AdminOverview() {
           {['All', 'New', 'Assigned', 'En Route', 'On Site', 'Resolved'].map((f) => (
             <button
               key={f}
-              className="px-3 py-1 text-xs rounded border border-white/10 text-white/50 hover:bg-white/8 hover:text-white/80 transition-colors whitespace-nowrap"
+              className="px-3 py-1 text-xs rounded border border-white/10 text-white/70 hover:bg-white/8 hover:text-white transition-colors whitespace-nowrap"
             >
               {f}
             </button>
           ))}
-          <button className="ml-auto px-3 py-1 text-xs rounded border border-white/10 text-white/50 hover:bg-white/8 whitespace-nowrap">
+          <button className="ml-auto px-3 py-1 text-xs rounded border border-white/10 text-white/70 hover:bg-white/8 whitespace-nowrap">
             All severity
           </button>
         </div>
@@ -265,14 +265,14 @@ export default function AdminOverview() {
               className="text-left border border-white/8 rounded p-3 hover:bg-white/5 transition-all group"
             >
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-2xs font-mono text-white/30">{inc.id}</span>
+                <span className="text-2xs font-mono text-white/50">{inc.id}</span>
                 <SeverityBadge severity={inc.verifiedSeverity} />
               </div>
-              <p className="text-xs font-semibold text-white/80 leading-snug mb-1 group-hover:text-white">
+              <p className="text-xs font-semibold text-white leading-snug mb-1 group-hover:text-white">
                 {inc.description}
               </p>
-              <p className="text-2xs text-white/35 mb-2 line-clamp-2">{inc.fullDescription}</p>
-              <div className="flex items-center gap-1 text-2xs text-white/30 mb-2">
+              <p className="text-2xs text-white/60 mb-2 line-clamp-2">{inc.fullDescription}</p>
+              <div className="flex items-center gap-1 text-2xs text-white/50 mb-2">
                 <MapPin size={9} />
                 <span>{inc.locationText}</span>
                 <span>·</span>
@@ -283,7 +283,7 @@ export default function AdminOverview() {
                 <StatusBadge status={inc.status} />
                 <CategoryBadge category={inc.category} />
                 {!inc.assignedTeamId && (
-                  <span className="text-2xs text-sage/70 ml-auto">Assign</span>
+                  <span className="text-2xs text-sage ml-auto">Assign</span>
                 )}
               </div>
             </button>
@@ -292,7 +292,7 @@ export default function AdminOverview() {
         <div className="px-4 py-2.5 border-t border-white/8 text-center">
           <button
             onClick={() => navigate('/admin/incidents')}
-            className="text-xs text-white/40 hover:text-white flex items-center gap-1 transition-colors mx-auto"
+            className="text-xs text-white/60 hover:text-white flex items-center gap-1 transition-colors mx-auto"
           >
             Manage all incidents <ArrowRight size={11} />
           </button>
