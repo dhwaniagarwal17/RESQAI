@@ -5,6 +5,10 @@ from typing import Optional, Literal
 import uvicorn
 import os
 import time
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 from app.services.bertweet_service import BertweetService
 from app.services.gemini_service import GeminiService
@@ -63,8 +67,12 @@ async def startup_event():
         print("⚠ Will use Gemini-only mode")
     
     print("\n[2/2] Initializing Gemini service...")
-    gemini_service.initialize()
-    print("✓ Gemini service initialized")
+    try:
+        gemini_service.initialize()
+        print("✓ Gemini service initialized")
+    except Exception as e:
+        print(f"⚠ Gemini service not available: {e}")
+        print("⚠ Will operate in BERTweet-only mode")
     
     print("\n" + "=" * 60)
     print("ML Service Ready!")
@@ -129,7 +137,18 @@ async def classify_message(request: ClassificationRequest):
                 gemini_used=False
             )
         
-        # Step 4: Use Gemini for contextual analysis
+        # Step 4: Use Gemini for contextual analysis (if available)
+        if not gemini_service.is_configured():
+            # Gemini not available, return BERTweet result with warning
+            print("WARNING: Gemini requested but not configured. Using BERTweet result.")
+            return ClassificationResponse(
+                model_used="BERTweet",
+                bertweet_prediction=bertweet_category,
+                bertweet_confidence=bertweet_confidence,
+                final_category=bertweet_category,
+                gemini_used=False
+            )
+        
         gemini_result = gemini_service.analyze(
             text=request.message,
             bertweet_prediction=bertweet_category,

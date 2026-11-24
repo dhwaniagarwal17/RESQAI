@@ -1,6 +1,5 @@
 import os
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 from pydantic import BaseModel, Field
 from typing import Literal
 
@@ -28,8 +27,8 @@ class GeminiAnalysis(BaseModel):
 
 class GeminiService:
     def __init__(self):
-        self.client = None
-        self.model_name = "gemini-2.0-flash-exp"
+        self.model = None
+        self.model_name = "gemini-pro"
         
     def initialize(self):
         """Initialize Gemini client"""
@@ -40,16 +39,51 @@ class GeminiService:
             print("Gemini fallback will not be available")
             return
         
+        if not api_key.startswith('AIza'):
+            print(f"WARNING: API key format looks incorrect (should start with 'AIza')")
+            print(f"Current key starts with: {api_key[:10]}...")
+            return
+        
         try:
-            self.client = genai.Client(api_key=api_key)
-            print(f"Gemini client initialized with model: {self.model_name}")
+            genai.configure(api_key=api_key)
+            
+            # List available models to help with debugging
+            print("\nFetching available Gemini models...")
+            available_models = []
+            try:
+                for model in genai.list_models():
+                    if 'generateContent' in model.supported_generation_methods:
+                        available_models.append(model.name)
+                        print(f"  - {model.name}")
+            except Exception as e:
+                print(f"  Could not list models: {e}")
+                print(f"  This might indicate an API key issue")
+            
+            if not available_models:
+                print("  No models available - check your API key")
+                return
+            
+            # Try the first available model
+            model_name = available_models[0]
+            print(f"\nUsing model: {model_name}")
+            self.model = genai.GenerativeModel(model_name)
+            self.model_name = model_name
+            
+            # Test with a simple generation
+            print("Testing model...")
+            test_response = self.model.generate_content("Say 'OK' if you can read this")
+            print(f"✓ Model test successful!")
+            print(f"✓ Gemini initialized with: {model_name}")
+            
         except Exception as e:
             print(f"Error initializing Gemini: {str(e)}")
-            raise
+            import traceback
+            traceback.print_exc()
+            # Don't raise - allow service to start without Gemini
     
     def is_configured(self):
         """Check if Gemini is configured"""
-        return self.client is not None
+        return self.model is not None
     
     def analyze(self, text: str, bertweet_prediction: str, bertweet_confidence: float) -> dict:
         """
@@ -67,64 +101,69 @@ class GeminiService:
             raise RuntimeError("Gemini not configured. Set GEMINI_API_KEY environment variable.")
         
         prompt = f"""
-You are the secondary analysis component of RESQAI,
-an AI-assisted humanitarian disaster information system.
+You are analyzing a disaster-related social media message for humanitarian classification.
 
-Analyze the following social-media message related to a possible
-disaster or emergency.
+MESSAGE: {text}
 
-MESSAGE:
-{text}
+A BERTweet model predicted: {bertweet_prediction} (confidence: {bertweet_confidence:.2%})
 
-The primary BERTweet classifier predicted:
+Analyze this message and provide:
+1. The most appropriate category from: caution_and_advice, displaced_people_and_evacuations, infrastructure_and_utility_damage, injured_or_dead_people, missing_or_found_people, not_humanitarian, other_relevant_information, requests_or_urgent_needs, rescue_volunteering_or_donation_effort, sympathy_and_support
 
-Category: {bertweet_prediction}
-Confidence: {bertweet_confidence:.2%}
+2. Is it humanitarian/disaster-related? (true/false)
 
-Your task is to independently analyze the message and select the
-MOST appropriate humanitarian category.
+3. Urgency level: LOW, MEDIUM, or HIGH
 
-You MUST choose exactly one of the categories provided in the output schema.
+4. Is the author requesting help? (true/false)
 
-Consider the actual meaning and context of the message rather than
-relying only on disaster-related keywords.
+5. Any location mentioned? (extract location or return "NONE")
 
-Determine:
-- the most appropriate humanitarian category
-- whether the message is humanitarian/relevant
-- urgency (LOW, MEDIUM, or HIGH)
-- whether the author is requesting help
-- any explicitly mentioned location
-- a concise explanation for the classification
+6. Brief explanation of your classification
 
-For LOCATION:
-Return the explicitly mentioned location if one exists.
-If no location is present, return "NONE".
-
-Do not invent information that is not present in the message.
+Respond in this JSON format:
+{{
+  "category": "category_name",
+  "humanitarian": true/false,
+  "urgency": "LOW/MEDIUM/HIGH",
+  "request_for_help": true/false,
+  "location": "location or NONE",
+  "explanation": "brief explanation"
+}}
 """
         
         try:
-            response = self.client.models.generate_content(
-                model=self.model_name,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=GeminiAnalysis
+            response = self.model.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=0.1,
                 )
             )
             
-            result = response.parsed
+            # Parse JSON from response
+            import json
+            result_text = response.text.strip()
+            # Remove markdown code blocks if present
+            if result_text.startswith("```json"):
+                result_text = result_text[7:]
+            if result_text.startswith("```"):
+                result_text = result_text[3:]
+            if result_text.endswith("```"):
+                result_text = result_text[:-3]
+            result_text = result_text.strip()
+            
+            result = json.loads(result_text)
             
             return {
-                "category": result.category,
-                "humanitarian": result.humanitarian,
-                "urgency": result.urgency,
-                "request_for_help": result.request_for_help,
-                "location": result.location,
-                "explanation": result.explanation
+                "category": result["category"],
+                "humanitarian": result["humanitarian"],
+                "urgency": result["urgency"],
+                "request_for_help": result["request_for_help"],
+                "location": result["location"],
+                "explanation": result["explanation"]
             }
             
         except Exception as e:
             print(f"Gemini analysis error: {str(e)}")
+            import traceback
+            traceback.print_exc()
             raise RuntimeError(f"Gemini analysis failed: {str(e)}")
