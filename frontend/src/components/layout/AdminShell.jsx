@@ -72,7 +72,7 @@ export default function AdminShell() {
         <header className="flex items-center justify-between px-6 py-3 border-b border-white/8 bg-carbon/60 backdrop-blur-sm">
           <div>
             <p className="text-sm font-semibold text-white">Operations Overview</p>
-            <p className="text-xs text-white/30">Incident intelligence · mock data</p>
+            <p className="text-xs text-white/30">Incident intelligence dashboard</p>
           </div>
           <div className="flex items-center gap-2">
             <button

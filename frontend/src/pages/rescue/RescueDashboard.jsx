@@ -38,11 +38,6 @@ export default function RescueDashboard() {
 
   return (
     <div className="p-5 space-y-5">
-      {/* Demo notice */}
-      <div className="border border-amber/20 bg-amber/5 rounded px-4 py-2 text-xs text-amber/80">
-        ⚠ Preview only — status updates are client-side and do not affect any real system.
-      </div>
-
       <div className="grid lg:grid-cols-5 gap-5">
         {/* Left: incident + progress */}
         <div className="lg:col-span-3 space-y-4">

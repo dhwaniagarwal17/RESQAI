@@ -88,7 +88,6 @@ export default function ReporterDashboard() {
             <span>Send SOS</span>
             <Radio size={14} strokeWidth={2} />
           </button>
-          <p className="text-2xs text-carbon/30 mt-2 text-center">Demo only — no real signal is transmitted.</p>
         </div>
       </section>
 

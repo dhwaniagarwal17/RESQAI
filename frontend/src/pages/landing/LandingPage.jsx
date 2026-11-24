@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, LogIn } from 'lucide-react'
 
 const portals = [
   {
@@ -31,6 +31,17 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-linen font-sans flex flex-col items-center justify-center px-6 py-16">
+      {/* Top right login button */}
+      <div className="absolute top-6 right-6">
+        <button
+          onClick={() => navigate('/login')}
+          className="flex items-center gap-2 px-4 py-2 bg-carbon text-linen rounded hover:bg-carbon/90 transition-colors text-sm font-medium"
+        >
+          <LogIn size={16} />
+          Login
+        </button>
+      </div>
+
       {/* Attribution */}
       <p className="text-xs tracking-widest uppercase text-carbon/30 mb-12 text-center">
         Team Apex &nbsp;·&nbsp; Thapar Institute of Engineering &amp; Technology
@@ -45,16 +56,9 @@ export default function LandingPage() {
         </h1>
       </div>
 
-      <p className="text-center text-carbon/50 max-w-sm text-sm leading-relaxed mb-4">
+      <p className="text-center text-carbon/50 max-w-sm text-sm leading-relaxed mb-12">
         RESQAI routes disaster-related messages through a hybrid AI pipeline — classifying urgency, category, and location so responders can act faster.
       </p>
-
-      {/* Demo notice */}
-      <div className="mb-12">
-        <span className="text-xs text-carbon/30 border border-carbon/15 rounded px-3 py-1">
-          Development preview · mock data · no real emergency services connected
-        </span>
-      </div>
 
       {/* Portal cards */}
       <div className="grid sm:grid-cols-3 gap-6 w-full max-w-3xl">

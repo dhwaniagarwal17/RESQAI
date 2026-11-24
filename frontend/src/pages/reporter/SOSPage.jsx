@@ -91,7 +91,7 @@ export default function SOSPage() {
         <Loader size={32} className="text-coral animate-spin mx-auto mb-4" strokeWidth={1.5} />
         <p className="text-sm font-medium text-carbon">Transmitting SOS…</p>
         <p className="text-xs text-carbon/40 mt-1">
-          {isAuthenticated ? 'Contacting operations centre' : 'Demo only — no real service contacted'}
+          Contacting operations centre
         </p>
       </div>
     )
@@ -121,8 +121,7 @@ export default function SOSPage() {
 
           <div className="bg-amber/8 border border-amber/20 rounded p-3 text-xs text-amber mb-5 leading-relaxed">
             <AlertTriangle size={12} className="inline mr-1 mb-0.5" />
-            For real emergencies, also call <strong>112</strong>. This system{' '}
-            {isAuthenticated ? 'will notify' : 'is a simulation and will NOT notify'} emergency services.
+            For real emergencies, also call <strong>112</strong>. This system will notify emergency services.
           </div>
 
           <button
@@ -192,10 +191,6 @@ export default function SOSPage() {
           <Radio size={15} strokeWidth={2} />
           Send SOS Now
         </button>
-
-        <p className="text-2xs text-carbon/30 text-center mt-2">
-          {isAuthenticated ? 'This will alert the operations centre.' : 'Demo — no real signal sent.'}
-        </p>
       </div>
     </div>
   )

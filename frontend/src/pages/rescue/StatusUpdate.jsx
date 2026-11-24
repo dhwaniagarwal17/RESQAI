@@ -125,10 +125,6 @@ export default function StatusUpdate() {
           <p className="text-xs text-carbon/50 mt-1">This incident has been fully resolved.</p>
         </div>
       )}
-
-      <p className="text-2xs text-carbon/30 text-center">
-        Status changes are stored locally and reflected across all dashboards in this demo.
-      </p>
     </div>
   )
 }

@@ -38,12 +38,17 @@ class IncidentService {
         incidentData.location.address = classificationData.location;
       }
     } else {
-      // BERTweet only
+      // BERTweet only - infer urgency from category
+      const priority = this.inferPriorityFromCategory(classificationData.final_category);
+      const urgency = this.inferUrgencyFromCategory(classificationData.final_category);
+      
       incidentData = {
         ...incidentData,
         category: classificationData.final_category,
         confidence: classificationData.bertweet_confidence,
-        priority: this.inferPriorityFromCategory(classificationData.final_category)
+        priority: priority,
+        urgency: urgency,
+        humanitarianStatus: classificationData.final_category !== 'not_humanitarian'
       };
     }
 
@@ -106,6 +111,27 @@ class IncidentService {
       return 'medium';
     }
     return 'low';
+  }
+
+  inferUrgencyFromCategory(category) {
+    const highUrgencyCategories = [
+      'requests_or_urgent_needs',
+      'injured_or_dead_people',
+      'missing_or_found_people'
+    ];
+    
+    const mediumUrgencyCategories = [
+      'displaced_people_and_evacuations',
+      'infrastructure_and_utility_damage',
+      'caution_and_advice'
+    ];
+
+    if (highUrgencyCategories.includes(category)) {
+      return 'HIGH';
+    } else if (mediumUrgencyCategories.includes(category)) {
+      return 'MEDIUM';
+    }
+    return 'LOW';
   }
 
   async updateIncidentStatus(incidentId, status, userId, notes) {

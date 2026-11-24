@@ -101,9 +101,6 @@ export default function MyReports() {
           <AlertCircle size={13} className="text-coral mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-xs text-coral">{fetchError}</p>
-            {!isAuthenticated && (
-              <p className="text-2xs text-carbon/40 mt-0.5">Showing demo data. <button onClick={() => navigate('/login')} className="underline">Sign in</button> for real reports.</p>
-            )}
           </div>
         </div>
       )}
