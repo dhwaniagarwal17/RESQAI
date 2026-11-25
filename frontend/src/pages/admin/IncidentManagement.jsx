@@ -7,7 +7,7 @@ import { formatRelativeTime } from '../../data/store'
 import EmptyState from '../../components/ui/EmptyState'
 
 const SEVERITY_OPTS = ['All', 'critical', 'high', 'medium', 'low']
-const STATUS_OPTS  = ['All', 'submitted', 'under_review', 'assigned', 'accepted', 'en_route', 'on_site', 'resolved', 'rejected', 'cancelled']
+const STATUS_OPTS  = ['All', 'pending', 'assigned', 'accepted', 'en_route', 'on_site', 'resolved', 'cancelled']
 
 export default function IncidentManagement() {
   const navigate = useNavigate()
@@ -32,7 +32,7 @@ export default function IncidentManagement() {
           description: inc.message || inc.description || 'No description',
           fullDescription: inc.message || inc.description || '',
           category: inc.category,
-          verifiedSeverity: inc.urgency || inc.priority || 'medium',
+          verifiedSeverity: inc.priority || (inc.urgency ? inc.urgency.toLowerCase() : 'medium'),
           status: inc.status,
           locationText: inc.location?.address || `${inc.location?.coordinates?.[1]}, ${inc.location?.coordinates?.[0]}` || 'Unknown',
           location: inc.location,

@@ -92,12 +92,15 @@ def root():
 @app.get("/health")
 def health_check():
     """Health check endpoint"""
-    return {
+    health = {
         "status": "healthy",
         "bertweet_loaded": bertweet_service.is_loaded(),
         "gemini_configured": gemini_service.is_configured(),
         "timestamp": time.time()
     }
+    if not bertweet_service.is_loaded() and bertweet_service.load_error:
+        health["bertweet_error"] = bertweet_service.load_error
+    return health
 
 
 @app.post("/classify", response_model=ClassificationResponse)

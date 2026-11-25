@@ -4,28 +4,8 @@ import { ArrowLeft, AlertCircle, CheckCircle, FileText, Loader, MapPin } from 'l
 import { createIncident } from '../../services/incidentService'
 import { useAuth } from '../../context/AuthContext'
 
-const CATEGORIES = [
-  'Injured or People in Danger',
-  'Rescue Request',
-  'Missing / Found',
-  'Infrastructure',
-  'Displaced / Evacuation',
-  'Caution & Advice',
-  'Volunteering',
-  'Other',
-]
-
-const URGENCY_OPTIONS = [
-  { value: 'critical', label: 'Critical — Immediate threat to life' },
-  { value: 'high',     label: 'High — Serious risk, urgent response needed' },
-  { value: 'medium',   label: 'Medium — Significant but not immediately life-threatening' },
-  { value: 'low',      label: 'Low — Informational or non-urgent' },
-]
-
 const INITIAL = {
   description: '',
-  category: '',
-  urgency: '',
   locationText: '',
   peopleAffected: '',
   contactName: '',
@@ -95,10 +75,6 @@ export default function ReportForm() {
     const e = {}
     if (!form.description.trim() || form.description.trim().length < 10)
       e.description = 'Please describe the situation (at least 10 characters).'
-    if (!form.category)
-      e.category = 'Please select a category.'
-    if (!form.urgency)
-      e.urgency = 'Please indicate how urgent this is.'
     if (!form.locationText.trim())
       e.locationText = 'Please provide a location or address.'
     if (form.peopleAffected !== '' && (isNaN(Number(form.peopleAffected)) || Number(form.peopleAffected) < 0))
@@ -120,7 +96,6 @@ export default function ReportForm() {
     // Build the message string the backend/ML expects
     const message = [
       form.description.trim(),
-      form.category ? `Category: ${form.category}` : '',
       form.locationText.trim() ? `Location: ${form.locationText.trim()}` : '',
       form.peopleAffected ? `People affected: ${form.peopleAffected}` : '',
     ].filter(Boolean).join('. ')
@@ -137,8 +112,6 @@ export default function ReportForm() {
       },
       // Extra fields stored for display purposes (not in backend schema yet, so stored separately)
       _meta: {
-        reporterUrgency: form.urgency,
-        category: form.category,
         locationText: form.locationText.trim(),
         peopleAffected: form.peopleAffected ? Number(form.peopleAffected) : 0,
         contactName: form.contactName.trim(),
@@ -158,9 +131,6 @@ export default function ReportForm() {
         incident = addIncident({
           description: form.description.trim(),
           fullDescription: message,
-          category: form.category,
-          reporterUrgency: form.urgency,
-          verifiedSeverity: form.urgency,
           locationText: form.locationText.trim(),
           coords: null,
           peopleAffected: form.peopleAffected ? Number(form.peopleAffected) : 0,
@@ -289,62 +259,6 @@ export default function ReportForm() {
           {errors.description && <p className="text-2xs text-coral mt-1">{errors.description}</p>}
         </div>
 
-        {/* Category */}
-        <div>
-          <label className="block text-xs font-medium text-carbon/70 mb-1.5" htmlFor="category">
-            Category <span className="text-coral">*</span>
-          </label>
-          <div className="grid grid-cols-2 gap-1.5">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => update('category', cat)}
-                className={`text-left px-3 py-2 rounded border text-xs font-medium transition-all ${
-                  form.category === cat
-                    ? 'border-carbon bg-carbon text-white'
-                    : 'border-carbon/15 text-carbon/60 hover:border-carbon/35 hover:text-carbon'
-                }`}
-                disabled={loading}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-          {errors.category && <p className="text-2xs text-coral mt-1">{errors.category}</p>}
-        </div>
-
-        {/* Urgency */}
-        <div>
-          <label className="block text-xs font-medium text-carbon/70 mb-1.5">
-            How urgent is this? <span className="text-coral">*</span>
-          </label>
-          <div className="space-y-1.5">
-            {URGENCY_OPTIONS.map((opt) => (
-              <label
-                key={opt.value}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded border cursor-pointer transition-all ${
-                  form.urgency === opt.value
-                    ? 'border-carbon bg-carbon/5'
-                    : 'border-carbon/15 hover:border-carbon/30'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="urgency"
-                  value={opt.value}
-                  checked={form.urgency === opt.value}
-                  onChange={() => update('urgency', opt.value)}
-                  className="accent-carbon"
-                  disabled={loading}
-                />
-                <span className="text-xs text-carbon">{opt.label}</span>
-              </label>
-            ))}
-          </div>
-          {errors.urgency && <p className="text-2xs text-coral mt-1">{errors.urgency}</p>}
-        </div>
-
         {/* Location */}
         <div>
           <label className="block text-xs font-medium text-carbon/70 mb-1" htmlFor="locationText">
@@ -458,7 +372,7 @@ export default function ReportForm() {
           </button>
           <p className="text-2xs text-carbon/30 text-center mt-2">
             {isAuthenticated
-              ? 'Your report will be classified by AI and reviewed by an administrator.'
+              ? 'Severity and urgency will be assessed automatically by AI.'
               : 'Sign in to submit a real report to the operations centre.'}
           </p>
         </div>

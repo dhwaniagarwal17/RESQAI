@@ -37,7 +37,7 @@ export default function IncidentDetail() {
           description: incidentData.message || incidentData.description || 'No description',
           fullDescription: incidentData.message || incidentData.description || '',
           category: incidentData.category,
-          verifiedSeverity: incidentData.urgency || incidentData.priority || 'medium',
+          verifiedSeverity: incidentData.priority || (incidentData.urgency ? incidentData.urgency.toLowerCase() : 'medium'),
           status: incidentData.status,
           locationText: incidentData.location?.address || 
                        `${incidentData.location?.coordinates?.[1]}, ${incidentData.location?.coordinates?.[0]}` || 

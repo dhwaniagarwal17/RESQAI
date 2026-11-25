@@ -34,7 +34,7 @@ export default function TeamManagement() {
             id: team._id,
             fullName: team.name,
             teamId: team.teamId || team._id,
-            base: 'Chandigarh HQ', // Default, can be added to backend model
+            base: team.base || null, // Set in backend if needed
             memberCount: team.members || 5, // Default, can be added to backend model
             members: team.members || 5,
             availability: isDeployed ? 'deployed' : 'available',
@@ -107,9 +107,11 @@ export default function TeamManagement() {
                   </span>
                 </div>
 
-                <p className="text-xs text-white/40 flex items-center gap-1 mb-2">
-                  <MapPin size={10} /> {team.base}
-                </p>
+                {team.base && (
+                  <p className="text-xs text-white/40 flex items-center gap-1 mb-2">
+                    <MapPin size={10} /> {team.base}
+                  </p>
+                )}
 
                 <p className="text-xs text-white/40 flex items-center gap-1 mb-3">
                   <Users size={10} /> {team.memberCount} members

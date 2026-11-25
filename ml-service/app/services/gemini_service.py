@@ -28,7 +28,7 @@ class GeminiAnalysis(BaseModel):
 class GeminiService:
     def __init__(self):
         self.model = None
-        self.model_name = "gemini-pro"
+        self.model_name = "gemini-2.0-flash"
         
     def initialize(self):
         """Initialize Gemini client"""
@@ -39,41 +39,48 @@ class GeminiService:
             print("Gemini fallback will not be available")
             return
         
-        if not api_key.startswith('AIza'):
-            print(f"WARNING: API key format looks incorrect (should start with 'AIza')")
-            print(f"Current key starts with: {api_key[:10]}...")
-            return
-        
         try:
             genai.configure(api_key=api_key)
             
-            # List available models to help with debugging
+            # Preferred models in order — first one that works wins
+            PREFERRED_MODELS = [
+                "models/gemini-3.8-flash",
+                "models/gemini-3.5-flash",
+                "models/gemini-3.1-flash-lite",
+                "models/gemini-flash-latest",
+                "models/gemini-flash-lite-latest",
+            ]
+
             print("\nFetching available Gemini models...")
-            available_models = []
             try:
-                for model in genai.list_models():
-                    if 'generateContent' in model.supported_generation_methods:
-                        available_models.append(model.name)
-                        print(f"  - {model.name}")
+                available = {
+                    m.name
+                    for m in genai.list_models()
+                    if 'generateContent' in m.supported_generation_methods
+                }
+                for name in available:
+                    print(f"  - {name}")
             except Exception as e:
                 print(f"  Could not list models: {e}")
-                print(f"  This might indicate an API key issue")
-            
-            if not available_models:
-                print("  No models available - check your API key")
+                available = set()
+
+            # Pick first preferred model that is listed as available
+            chosen = next((m for m in PREFERRED_MODELS if m in available), None)
+
+            # If none matched the preferred list, fall back to first available
+            if not chosen and available:
+                chosen = next(iter(available))
+
+            if not chosen:
+                print("  No usable models found — check your API key")
                 return
-            
-            # Try the first available model
-            model_name = available_models[0]
-            print(f"\nUsing model: {model_name}")
-            self.model = genai.GenerativeModel(model_name)
-            self.model_name = model_name
-            
-            # Test with a simple generation
-            print("Testing model...")
-            test_response = self.model.generate_content("Say 'OK' if you can read this")
-            print(f"✓ Model test successful!")
-            print(f"✓ Gemini initialized with: {model_name}")
+
+            print(f"\nTesting model: {chosen}")
+            candidate = genai.GenerativeModel(chosen)
+            test_response = candidate.generate_content("Say 'OK' if you can read this")
+            self.model = candidate
+            self.model_name = chosen
+            print(f"✓ Gemini initialized with: {chosen}")
             
         except Exception as e:
             print(f"Error initializing Gemini: {str(e)}")
