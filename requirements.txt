@@ -1,0 +1,11 @@
+torch
+transformers
+datasets
+scikit-learn
+pandas
+numpy
+matplotlib
+seaborn
+google-genai
+pydantic
+emoji==0.6.0

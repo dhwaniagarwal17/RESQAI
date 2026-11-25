@@ -1,0 +1,979 @@
+\documentclass[12pt,a4paper]{article}
+
+% =========================================================
+% PACKAGES
+% =========================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{longtable}
+\usepackage{fancyhdr}
+\usepackage{listings}
+
+% =========================================================
+% PAGE SETUP
+% =========================================================
+\geometry{
+    top=1in,
+    bottom=1in,
+    left=1in,
+    right=1in
+}
+
+\onehalfspacing
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{ResQAI}
+\rhead{Team APEX}
+\cfoot{\thepage}
+
+% =========================================================
+% CODE STYLE
+% =========================================================
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    columns=fullflexible
+}
+
+% =========================================================
+% DOCUMENT
+% =========================================================
+\begin{document}
+
+% =========================================================
+% TITLE PAGE
+% =========================================================
+\begin{titlepage}
+    \centering
+
+    \vspace*{0.8cm}
+
+    {\Large \textbf{TEAM APEX}}\\[0.8cm]
+
+    {\LARGE \textbf{RESQAI}}\\[0.5cm]
+
+    {\Large \textbf{AI-Assisted Disaster Response Through\\
+    Humanitarian Message Classification}}\\[1.2cm]
+
+    {\large A Machine Learning Based Approach for\\
+    Real-Time Crisis Information Analysis}\\[1.5cm]
+
+    \vfill
+
+    {\large \textbf{PROJECT REPORT}}\\[0.8cm]
+
+    Submitted in partial fulfillment of the requirements\\
+    for the academic project
+
+    \vspace{1.2cm}
+
+    {\large \textbf{TEAM MEMBERS}}\\[0.6cm]
+
+    \begin{tabular}{ll}
+        \textbf{Dhwani Agarwal} & \textbf{1024031024} \\
+        \textbf{Sanchita Jain} & \textbf{1024031020} \\
+        \textbf{Yuvakshi Sood} & \textbf{1024031025}
+    \end{tabular}
+
+    \vspace{1.5cm}
+
+    {\large \textbf{DEPARTMENT OF COMPUTER SCIENCE}}\\[0.4cm]
+
+    {\large \textbf{THAPAR INSTITUTE OF ENGINEERING AND TECHNOLOGY}}\\[0.8cm]
+
+    {\large 2026}
+
+\end{titlepage}
+
+% =========================================================
+% ABSTRACT
+% =========================================================
+\begin{abstract}
+
+Natural disasters and humanitarian emergencies generate large amounts of
+information through social media and other online communication channels.
+During such events, affected individuals may report injuries, request
+assistance, provide information about infrastructure damage, communicate
+evacuation requirements, or offer rescue and volunteering support. However,
+these useful messages are mixed with irrelevant, political, emotional, and
+general informational content. Manually filtering this information is
+time-consuming and difficult during rapidly evolving emergencies.
+
+This project presents \textbf{ResQAI}, an AI-assisted disaster information
+processing system designed to automatically classify crisis-related
+social-media messages into humanitarian categories. The system uses
+\textbf{BERTweet}, a transformer-based language model pretrained specifically
+for Twitter-style text, and fine-tunes it on the \textbf{HumAID} dataset.
+
+Multiple approaches were investigated, including traditional TF-IDF-based
+machine learning models, Logistic Regression, Linear Support Vector Machines,
+Random Forest, DistilBERT, and BERTweet. Among the evaluated approaches,
+BERTweet produced the strongest overall performance. The final BERTweet model
+achieved \textbf{78.67\% accuracy} and a \textbf{78.27\% weighted F1 score}
+on the unseen test set.
+
+Error analysis revealed that several humanitarian categories have substantial
+semantic overlap. In particular, the
+\texttt{other\_relevant\_information} category was frequently confused with
+categories such as \texttt{caution\_and\_advice} and
+\texttt{not\_humanitarian}. To address the limitations of a single
+classification model, a hybrid architecture is proposed in which BERTweet
+acts as the primary fast classifier while a large language model such as
+Gemini can provide secondary contextual analysis for low-confidence messages.
+
+The proposed system is intended as a decision-support and information
+filtering system rather than an autonomous emergency-response authority.
+
+\end{abstract}
+
+\newpage
+
+% =========================================================
+% TABLE OF CONTENTS
+% =========================================================
+\tableofcontents
+\newpage
+
+% =========================================================
+% 1. INTRODUCTION
+% =========================================================
+\section{Introduction}
+
+Natural disasters such as earthquakes, floods, hurricanes, wildfires, and
+other humanitarian emergencies can create rapidly changing situations in
+which timely information is extremely valuable. During such events, people
+frequently use social media to report incidents, request assistance, share
+warnings, communicate their condition, or provide information about affected
+areas.
+
+Although social media can provide valuable real-time situational information,
+the sheer volume of messages makes manual processing impractical. A stream of
+disaster-related messages may contain emergency requests alongside political
+discussions, expressions of sympathy, general news, jokes, opinions, and
+unrelated content.
+
+ResQAI addresses this problem by automatically classifying incoming messages
+into humanitarian information categories. The purpose of the system is to
+filter and organize large amounts of information so that potentially useful
+messages can be identified more efficiently.
+
+\subsection{Problem Statement}
+
+Given a social-media message associated with a disaster or humanitarian
+event, the system should determine the most relevant humanitarian category
+of the message.
+
+The classification categories include:
+
+\begin{itemize}
+    \item reports of injured or dead people,
+    \item infrastructure and utility damage,
+    \item requests for urgent assistance,
+    \item displaced people and evacuation information,
+    \item missing or found people,
+    \item rescue, volunteering, and donation efforts,
+    \item caution and safety information,
+    \item sympathy and support,
+    \item other relevant disaster information, and
+    \item non-humanitarian information.
+\end{itemize}
+
+\subsection{Objectives}
+
+The primary objectives of ResQAI are:
+
+\begin{enumerate}
+    \item To develop an automated classifier for humanitarian disaster
+    messages.
+    
+    \item To investigate both classical machine learning and transformer-based
+    approaches.
+    
+    \item To fine-tune a social-media-specific transformer model for disaster
+    message classification.
+    
+    \item To evaluate model performance using validation and unseen test data.
+    
+    \item To identify and analyze major sources of classification errors.
+    
+    \item To design a confidence-based architecture capable of using an LLM
+    for ambiguous messages.
+\end{enumerate}
+
+\subsection{Motivation}
+
+During a disaster, emergency responders may receive thousands of messages
+within a short period of time. Not every message requires immediate action,
+and important messages can be buried among large quantities of less useful
+content.
+
+An automated classification layer can therefore act as an initial information
+filter. Rather than replacing emergency personnel, such a system can help
+organize incoming information and highlight potentially relevant categories.
+
+% =========================================================
+% 2. BACKGROUND
+% =========================================================
+\section{Background and Related Technology}
+
+\subsection{Natural Language Processing}
+
+Natural Language Processing (NLP) is a field of artificial intelligence
+concerned with enabling computers to process and analyze human language.
+
+Social-media text presents several challenges compared with formal written
+language. These include:
+
+\begin{itemize}
+    \item abbreviations and informal expressions,
+    \item spelling variations,
+    \item hashtags and mentions,
+    \item emojis and emoticons,
+    \item incomplete sentences,
+    \item noisy punctuation, and
+    \item context-dependent meanings.
+\end{itemize}
+
+These characteristics make social-media-specific language models particularly
+useful for this application.
+
+\subsection{TF-IDF}
+
+Traditional machine learning experiments in this project used Term
+Frequency--Inverse Document Frequency (TF-IDF) to convert text into numerical
+vectors.
+
+The TF-IDF value of term $t$ in document $d$ can be expressed as:
+
+\begin{equation}
+TFIDF(t,d) = TF(t,d) \times IDF(t)
+\end{equation}
+
+where:
+
+\begin{equation}
+IDF(t) = \log\left(\frac{N}{df(t)}\right)
+\end{equation}
+
+Here, $N$ is the total number of documents and $df(t)$ is the number of
+documents containing term $t$.
+
+TF-IDF provides an efficient baseline representation but does not directly
+model contextual relationships between words.
+
+\subsection{Transformer Models}
+
+Transformer architectures use self-attention mechanisms to capture contextual
+relationships between tokens. Transformer-based language models can therefore
+produce contextual representations that are more suitable for understanding
+natural language than simple frequency-based representations.
+
+\subsection{BERTweet}
+
+BERTweet is a transformer-based language model pretrained specifically on
+English Twitter data. Since ResQAI targets short and informal social-media
+messages, BERTweet is particularly suitable for the application.
+
+The pretrained BERTweet model was fine-tuned using the HumAID dataset for
+ten-class humanitarian classification.
+
+% =========================================================
+% 3. DATASET
+% =========================================================
+\section{Dataset}
+
+The project uses the \textbf{HumAID} dataset, a humanitarian information
+dataset containing disaster-related social-media messages.
+
+\subsection{Dataset Distribution}
+
+The dataset used in the experiments consisted of:
+
+\begin{table}[H]
+\centering
+\caption{HumAID Dataset Distribution}
+\begin{tabular}{lr}
+\toprule
+\textbf{Dataset Split} & \textbf{Number of Messages} \\
+\midrule
+Training & 53,531 \\
+Validation & 7,793 \\
+Testing & 15,160 \\
+\midrule
+\textbf{Total} & \textbf{76,484} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Classification Categories}
+
+The dataset contains ten humanitarian information categories.
+
+\begin{longtable}{p{0.48\textwidth}p{0.42\textwidth}}
+\caption{HumAID Classification Categories} \\
+\toprule
+\textbf{Class} & \textbf{Description} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Class} & \textbf{Description} \\
+\midrule
+\endhead
+
+\texttt{caution\_and\_advice}
+&
+Safety warnings and recommendations
+\\
+
+\texttt{displaced\_people\_and\_evacuations}
+&
+Information about displaced people and evacuation
+\\
+
+\texttt{infrastructure\_and\_utility\_damage}
+&
+Reports of damage to buildings, roads, utilities, and other infrastructure
+\\
+
+\texttt{injured\_or\_dead\_people}
+&
+Reports concerning injured or deceased individuals
+\\
+
+\texttt{missing\_or\_found\_people}
+&
+Reports of missing or found individuals
+\\
+
+\texttt{not\_humanitarian}
+&
+Disaster-related content that is not directly humanitarian
+\\
+
+\texttt{other\_relevant\_information}
+&
+Other relevant information concerning the disaster
+\\
+
+\texttt{requests\_or\_urgent\_needs}
+&
+Requests for emergency assistance, resources, or supplies
+\\
+
+\texttt{rescue\_volunteering\_or\_donation\_effort}
+&
+Rescue activities, volunteer efforts, and donation-related information
+\\
+
+\texttt{sympathy\_and\_support}
+&
+Messages expressing sympathy, solidarity, or emotional support
+\\
+
+\bottomrule
+\end{longtable}
+
+% =========================================================
+% 4. METHODOLOGY
+% =========================================================
+\section{Methodology}
+
+The project followed an iterative machine learning development process.
+
+\subsection{Data Preparation}
+
+The dataset was loaded and divided into training, validation, and test sets.
+The class names were converted into numerical identifiers for model training.
+
+Each class was assigned a unique integer:
+
+\begin{equation}
+label \rightarrow \{0,1,\ldots,9\}
+\end{equation}
+
+The text was then processed using the BERTweet tokenizer.
+
+\subsection{Tokenization}
+
+BERTweet tokenization converts each message into a sequence of token IDs and
+an associated attention mask.
+
+The maximum sequence length was set to 128 tokens.
+
+Before selecting this value, token-length statistics were examined. The
+average training and validation message lengths were approximately 35 tokens.
+Only approximately 0.10\% of training messages and 0.04\% of validation
+messages reached the 128-token limit.
+
+Therefore, increasing the maximum sequence length was not expected to provide
+a meaningful improvement and would have increased computational requirements.
+
+\subsection{Model Training}
+
+The final BERTweet model was fine-tuned using the following configuration.
+
+\begin{table}[H]
+\centering
+\caption{Final BERTweet Training Configuration}
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Base model & BERTweet-base \\
+Maximum sequence length & 128 \\
+Learning rate & $1\times10^{-5}$ \\
+Training batch size & 8 \\
+Evaluation batch size & 8 \\
+Maximum epochs & 3 \\
+Weight decay & 0.01 \\
+Warm-up steps & 500 \\
+Learning-rate scheduler & Linear \\
+Mixed precision & FP16 \\
+Model selection metric & Weighted F1 \\
+Early stopping patience & 1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Model Selection}
+
+The model was evaluated at the end of every epoch. The checkpoint with the
+highest validation weighted F1 score was retained.
+
+This approach is important because lower training loss does not necessarily
+mean better generalization. During experimentation, validation performance
+stopped improving after approximately the second epoch while training loss
+continued to decrease.
+
+The use of early stopping and best-checkpoint selection therefore reduced the
+risk of retaining an overfit model.
+
+% =========================================================
+% 5. MODEL EXPERIMENTS
+% =========================================================
+\section{Model Experiments}
+
+Several approaches were evaluated before selecting BERTweet.
+
+\subsection{Traditional Machine Learning Models}
+
+TF-IDF representations were used with classical classifiers including:
+
+\begin{itemize}
+    \item Naive Bayes,
+    \item Logistic Regression,
+    \item class-weighted Logistic Regression,
+    \item Linear Support Vector Machine, and
+    \item Random Forest.
+\end{itemize}
+
+These models provided useful baselines but generally performed below the
+transformer-based models.
+
+\subsection{Transformer Models}
+
+Two transformer architectures were investigated:
+
+\begin{itemize}
+    \item DistilBERT,
+    \item BERTweet.
+\end{itemize}
+
+Class weighting was also investigated for DistilBERT and BERTweet-related
+experiments. However, class weighting did not improve the final performance
+and was therefore not used in the selected BERTweet configuration.
+
+\subsection{Model Comparison}
+
+The approximate experimental results are summarized below.
+
+\begin{table}[H]
+\centering
+\caption{Comparison of Evaluated Approaches}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Model} & \textbf{Approx. Accuracy} & \textbf{Observation} \\
+\midrule
+Naive Bayes & $\sim$68--69\% & Baseline \\
+Logistic Regression & $\sim$73--75\% & Strong classical baseline \\
+Weighted Logistic Regression & $\sim$73\% & No major improvement \\
+Linear SVM & $\sim$72--73\% & Competitive classical model \\
+Random Forest & $\sim$71--72\% & Lower performance \\
+DistilBERT & $\sim$77\% & Strong transformer baseline \\
+Weighted DistilBERT & $\sim$76\% & Weighting reduced performance \\
+BERTweet & \textbf{$\sim$79\%} & Best overall approach \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The results indicate that transformer-based models were better suited to
+capturing the contextual characteristics of disaster-related social-media
+messages.
+
+% =========================================================
+% 6. RESULTS
+% =========================================================
+\section{Results}
+
+\subsection{Validation Performance}
+
+The selected BERTweet configuration showed the following validation behavior:
+
+\begin{table}[H]
+\centering
+\caption{BERTweet Validation Performance by Epoch}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Epoch} & \textbf{Validation Accuracy} &
+\textbf{Weighted F1} \\
+\midrule
+1 & 76.90\% & 75.64\% \\
+2 & \textbf{78.40\%} & \textbf{78.05\%} \\
+3 & 78.28\% & 77.78\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The second epoch achieved the highest validation weighted F1 score.
+
+The third epoch showed a small decline in validation F1 despite continued
+improvement in training loss. This indicates the beginning of overfitting and
+supports the use of best-checkpoint selection.
+
+\subsection{Final Test Performance}
+
+After model selection, the model was evaluated on the unseen test set.
+
+\begin{table}[H]
+\centering
+\caption{Final BERTweet Test Results}
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric} & \textbf{Result} \\
+\midrule
+Test Accuracy & \textbf{78.67\%} \\
+Weighted F1 Score & \textbf{78.27\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The relatively close validation and test performance indicates that the
+selected model generalizes reasonably well to unseen data.
+
+% =========================================================
+% 7. ERROR ANALYSIS
+% =========================================================
+\section{Error Analysis}
+
+A confusion matrix was used to examine the behavior of the final BERTweet
+classifier.
+
+The most significant source of confusion was the
+\texttt{other\_relevant\_information} category. Messages belonging to this
+class were frequently predicted as other disaster-related categories.
+
+This is understandable because the class itself acts as a broad category for
+relevant information that does not clearly belong to another humanitarian
+class.
+
+\subsection{Semantic Overlap}
+
+Examples of ambiguous messages include:
+
+\begin{quote}
+``Aftershocks pls \#eqnz''
+\end{quote}
+
+and:
+
+\begin{quote}
+``When will it be safe to drink water, have kids walk around barefoot?''
+\end{quote}
+
+These messages contain useful disaster-related information, but their exact
+category can depend on context.
+
+For example, an aftershock-related message may be interpreted as:
+
+\begin{itemize}
+    \item other relevant information,
+    \item caution and advice, or
+    \item an urgent situation.
+\end{itemize}
+
+Similarly, a question about drinking water may represent a safety warning,
+an information request, or general disaster information.
+
+\subsection{Main Sources of Error}
+
+The primary sources of confusion observed during analysis were:
+
+\begin{enumerate}
+    \item \texttt{other\_relevant\_information} versus
+    \texttt{not\_humanitarian},
+    
+    \item \texttt{other\_relevant\_information} versus
+    \texttt{caution\_and\_advice},
+    
+    \item \texttt{requests\_or\_urgent\_needs} versus
+    \texttt{rescue\_volunteering\_or\_donation\_effort}.
+\end{enumerate}
+
+These errors indicate that the performance limitation is not necessarily
+caused by insufficient model capacity. The category definitions themselves
+have overlapping semantic boundaries.
+
+% =========================================================
+% 8. RESQAI SYSTEM ARCHITECTURE
+% =========================================================
+\section{Proposed ResQAI Architecture}
+
+The final ResQAI concept extends the trained BERTweet classifier with a
+confidence-based secondary analysis layer.
+
+\subsection{Primary Classifier}
+
+BERTweet acts as the primary classification model.
+
+For an incoming message, the model produces:
+
+\begin{itemize}
+    \item predicted humanitarian category,
+    \item prediction confidence.
+\end{itemize}
+
+High-confidence predictions can be processed directly by the system.
+
+\subsection{LLM Fallback}
+
+Messages for which BERTweet produces low-confidence predictions can be sent to
+a large language model such as Gemini for additional contextual analysis.
+
+The LLM can be instructed to return structured information such as:
+
+\begin{itemize}
+    \item humanitarian category,
+    \item priority,
+    \item location,
+    \item number of affected people,
+    \item type of assistance required,
+    \item recommended action,
+    \item explanation.
+\end{itemize}
+
+This component is proposed as a secondary reasoning layer rather than as a
+replacement for the trained classifier.
+
+\subsection{Hybrid Architecture}
+
+The proposed architecture is:
+
+\begin{verbatim}
+                  Incoming Message
+                         |
+                         v
+                 +---------------+
+                 |    BERTweet   |
+                 |  Classifier   |
+                 +-------+-------+
+                         |
+                 Category + Confidence
+                         |
+               +---------+---------+
+               |                   |
+       High Confidence       Low Confidence
+               |                   |
+               v                   v
+        BERTweet Result        Gemini API
+                                   |
+                                   v
+                           Contextual Analysis
+                                   |
+                                   v
+                         Structured Information
+                                   |
+                                   v
+                           Priority / Action
+\end{verbatim}
+
+The architecture allows the domain-specific classifier to handle clear
+messages efficiently while providing additional reasoning for ambiguous
+messages.
+
+% =========================================================
+% 9. SYSTEM WORKFLOW
+% =========================================================
+\section{System Workflow}
+
+The proposed workflow is as follows:
+
+\begin{enumerate}
+    \item Receive an incoming disaster-related social-media message.
+    
+    \item Tokenize the message using the BERTweet tokenizer.
+    
+    \item Run the trained BERTweet classifier.
+    
+    \item Obtain the predicted humanitarian category and confidence score.
+    
+    \item Compare the confidence score with a predefined threshold.
+    
+    \item If the confidence is sufficiently high, use the BERTweet prediction.
+    
+    \item If the confidence is low, send the message to the secondary LLM
+    analysis layer.
+    
+    \item Extract structured information such as location, urgency, and
+    assistance requirements.
+    
+    \item Present the resulting information to the user or emergency
+    information interface.
+\end{enumerate}
+
+% =========================================================
+% 10. EXAMPLE SYSTEM OPERATION
+% =========================================================
+\section{Example System Operation}
+
+Consider the following incoming message:
+
+\begin{quote}
+``People are trapped inside the collapsed building and urgently need rescue.''
+\end{quote}
+
+The BERTweet classifier may identify the message as:
+
+\begin{verbatim}
+Category: injured_or_dead_people
+Confidence: High
+\end{verbatim}
+
+Since the message is classified with high confidence, the system can use the
+BERTweet prediction directly.
+
+Now consider a more ambiguous message:
+
+\begin{quote}
+``Not sure if I slept through the aftershocks or if they are starting again.''
+\end{quote}
+
+If the classifier produces a low-confidence prediction, the system can invoke
+the secondary LLM layer. The LLM can provide additional contextual
+interpretation and structured information such as the likely category,
+location, urgency, and recommended action.
+
+This demonstrates why the proposed architecture does not simply send every
+message directly to an LLM.
+
+% =========================================================
+% 11. ADVANTAGES
+% =========================================================
+\section{Advantages}
+
+The proposed ResQAI architecture provides several advantages.
+
+\subsection{Domain-Specific Classification}
+
+BERTweet is fine-tuned specifically on humanitarian disaster messages rather
+than being used as a generic text classifier.
+
+\subsection{Social-Media Suitability}
+
+BERTweet was pretrained on Twitter-style data, making it appropriate for
+informal and short messages.
+
+\subsection{Reduced LLM Dependence}
+
+High-confidence messages can be processed directly by the trained classifier,
+reducing unnecessary external LLM calls.
+
+\subsection{Confidence-Based Reasoning}
+
+The system can reserve deeper LLM analysis for ambiguous messages.
+
+\subsection{Scalability}
+
+Automated classification can process large volumes of messages more
+efficiently than manual inspection.
+
+\subsection{Decision Support}
+
+The system is designed to organize information and support human decision
+making rather than independently making emergency decisions.
+
+% =========================================================
+% 12. LIMITATIONS
+% =========================================================
+\section{Limitations}
+
+The current implementation has several limitations.
+
+\begin{enumerate}
+    \item The final classifier achieves approximately 79\% accuracy rather
+    than perfect classification.
+    
+    \item Several humanitarian categories have overlapping semantic meanings.
+    
+    \item Social-media language is highly informal and context-dependent.
+    
+    \item The model is primarily trained on English-language data.
+    
+    \item A confidence threshold cannot guarantee that all ambiguous messages
+    will be correctly interpreted.
+    
+    \item The proposed LLM fallback architecture requires external API access.
+    
+    \item Real-world emergency deployment would require extensive reliability,
+    security, privacy, and human-oversight testing.
+\end{enumerate}
+
+Therefore, ResQAI should be treated as an information filtering and
+decision-support system rather than an autonomous emergency-response system.
+
+% =========================================================
+% 13. FUTURE SCOPE
+% =========================================================
+\section{Future Scope}
+
+Several improvements can be explored in future versions of ResQAI.
+
+\subsection{Multilingual Support}
+
+Disaster communication may occur in multiple languages. Multilingual
+transformer models could be introduced to support regional and international
+disaster communication.
+
+\subsection{Location Extraction}
+
+A dedicated entity extraction component could identify locations mentioned in
+messages and map them to geographical coordinates.
+
+\subsection{Real-Time Message Streams}
+
+The classifier could be integrated with real-time social-media or emergency
+message streams to support continuous monitoring.
+
+\subsection{Priority Prediction}
+
+A separate model could predict the urgency of a message independently from
+the humanitarian category.
+
+\subsection{Multimodal Analysis}
+
+Images and videos shared during disasters could be analyzed together with
+textual information.
+
+\subsection{Human-in-the-Loop Verification}
+
+Messages identified as critical could be presented to trained emergency
+operators for verification before any operational action is taken.
+
+\subsection{Improved Classification Boundaries}
+
+Further work could investigate hierarchical classification or multilabel
+classification because some disaster messages naturally contain information
+belonging to multiple categories.
+
+% =========================================================
+% 14. CONCLUSION
+% =========================================================
+\section{Conclusion}
+
+This project presented \textbf{ResQAI}, an AI-assisted system for processing
+and classifying humanitarian disaster messages.
+
+Multiple machine learning and transformer-based approaches were evaluated.
+Traditional TF-IDF-based approaches provided useful baselines, while
+transformer-based approaches produced stronger performance. BERTweet was
+selected as the primary model because of its suitability for social-media
+language and its superior performance in the experiments.
+
+The final BERTweet model achieved:
+
+\begin{center}
+\Large
+\textbf{78.67\% Test Accuracy}\\[0.2cm]
+\textbf{78.27\% Weighted F1 Score}
+\end{center}
+
+on the unseen test set containing 15,160 messages.
+
+Error analysis showed that the largest challenge was semantic overlap between
+humanitarian categories, particularly the broad
+\texttt{other\_relevant\_information} category and related classes.
+
+The project therefore proposes a hybrid architecture in which BERTweet acts
+as the primary domain-specific classifier and a large language model can be
+used as a secondary reasoning layer for low-confidence messages. This
+architecture combines the efficiency and measurable performance of a
+specialized classifier with the contextual reasoning capabilities of an LLM.
+
+ResQAI is ultimately intended to help organize the large volume of
+information generated during disasters and surface potentially important
+information for further human assessment.
+
+% =========================================================
+% REFERENCES
+% =========================================================
+\newpage
+
+\begin{thebibliography}{9}
+
+\bibitem{bertweet}
+D. Q. Nguyen, T. Vu, and A. T. Nguyen,
+``BERTweet: A pre-trained language model for English Tweets,''
+in \textit{Proceedings of the 2020 Conference on Empirical Methods in Natural
+Language Processing: System Demonstrations}, 2020.
+
+\bibitem{bert}
+J. Devlin, M.-W. Chang, K. Lee, and K. Toutanova,
+``BERT: Pre-training of Deep Bidirectional Transformers for Language
+Understanding,''
+in \textit{Proceedings of NAACL-HLT}, 2019.
+
+\bibitem{transformer}
+A. Vaswani et al.,
+``Attention Is All You Need,''
+in \textit{Advances in Neural Information Processing Systems}, 2017.
+
+\bibitem{tfidf}
+G. Salton and C. Buckley,
+``Term-weighting approaches in automatic text retrieval,''
+\textit{Information Processing \& Management},
+vol. 24, no. 5, pp. 513--523, 1988.
+
+\bibitem{humaid}
+QCRI,
+``HumAID: Humanitarian Information Dataset,''
+Humanitarian information classification dataset.
+
+\end{thebibliography}
+
+% =========================================================
+% END
+% =========================================================
+
+\end{document}

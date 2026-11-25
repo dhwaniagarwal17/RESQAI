@@ -1,0 +1,8 @@
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+torch==2.15.0
+transformers==4.36.0
+google-generativeai
+pydantic==2.12.5
+python-dotenv==1.0.0
+emoji==2.14.0
